@@ -530,6 +530,54 @@
             line-height: 1.6;
         }
 
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background-color: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            min-width: 250px;
+            max-width: 350px;
+            display: flex;
+            align-items: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background-color: #10b981; /* Green */
+        }
+
+        .toast.error {
+            background-color: #ef4444; /* Red */
+        }
+
+        .toast.info {
+            background-color: #3b82f6; /* Blue */
+        }
+
+        .toast-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .app {
@@ -699,6 +747,9 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
     <script>
         // =================================================================================
         // STATE & CONFIG
@@ -740,6 +791,17 @@
                 return newPrompt;
             },
             
+            updatePrompt: function(updatedPrompt) {
+                let prompts = this.getPrompts();
+                const index = prompts.findIndex(p => p.id === updatedPrompt.id);
+                if (index !== -1) {
+                    prompts[index] = { ...prompts[index], ...updatedPrompt, updatedAt: new Date().toISOString() };
+                    this.savePrompts(prompts);
+                    return true;
+                }
+                return false;
+            },
+
             deletePrompt: function(id) {
                 this.savePrompts(this.getPrompts().filter(p => p.id !== id));
             },
@@ -821,8 +883,7 @@
             document.querySelectorAll('.step').forEach((el, idx) => { el.classList.remove('active', 'completed'); if (idx === currentStep) el.classList.add('active'); else if (idx < currentStep) el.classList.add('completed'); });
             document.getElementById('prev-btn').classList.toggle('hidden', currentStep === 0);
             document.getElementById('next-btn').textContent = (currentStep === steps.length - 1) ? 'Créer le Prompt' : 'Suivant';
-            // Rendre les étapes optionnelles: le bouton Suivant n'est plus désactivé par défaut
-            document.getElementById('next-btn').disabled = false;
+            document.getElementById('next-btn').disabled = false; // Always enabled for optional steps
         }
 
         function nextStep() { if (currentStep < steps.length - 1) { currentStep++; updateStepDisplay(); } else { generatePrompt(); } }
@@ -830,7 +891,7 @@
 
         function generatePrompt() {
             storage.savePrompt({ title: (formData.objective || 'Nouveau Prompt').substring(0, 40) + '...', content: getPromptPreview(), category: formData.category, tags: ['wizard-generated'] });
-            alert('Prompt créé avec succès !');
+            showToast('Prompt créé avec succès !', 'success');
             resetForm();
             updatePromptCount();
         }
@@ -854,7 +915,7 @@
             const category = document.getElementById('freeform-prompt-category').value;
 
             if (!content) {
-                alert('Veuillez saisir un prompt pour le sauvegarder.');
+                showToast('Veuillez saisir un prompt pour le sauvegarder.', 'error');
                 return;
             }
 
@@ -863,7 +924,7 @@
             }
 
             storage.savePrompt({ title: title, content: content, category: category, tags: ['freeform'] });
-            alert('Prompt sauvegardé avec succès !');
+            showToast('Prompt sauvegardé avec succès !', 'success');
             document.getElementById('freeform-prompt-content').value = '';
             document.getElementById('freeform-prompt-title').value = '';
             updatePromptCount();
@@ -904,7 +965,12 @@
                     <p class="prompt-card-content">${prompt.content}</p>
                     <div class="prompt-card-footer">
                         <small class="prompt-card-date">Créé le: ${new Date(prompt.createdAt).toLocaleDateString('fr-FR')}</small>
-                        <div class="prompt-card-actions">${selectHTML}<button class="btn btn-secondary btn-sm" data-action="copy">Copier</button><button class="btn btn-secondary btn-sm" data-action="delete" style="background-color: #fee2e2; color: #ef4444;">Supprimer</button></div>
+                        <div class="prompt-card-actions">
+                            ${selectHTML}
+                            <button class="btn btn-secondary btn-sm" data-action="edit">Modifier</button>
+                            <button class="btn btn-secondary btn-sm" data-action="copy">Copier</button>
+                            <button class="btn btn-secondary btn-sm" data-action="delete" style="background-color: #fee2e2; color: #ef4444;">Supprimer</button>
+                        </div>
                     </div>`;
                 listContainer.appendChild(card);
             });
@@ -921,21 +987,26 @@
         // IMPORT / EXPORT DATA
         // =================================================================================
         function exportData() {
-            const data = {
-                prompts: storage.getPrompts(),
-                folders: storage.getFolders()
-            };
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'prompts_data.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            alert('Données exportées avec succès !');
+            try {
+                const data = {
+                    prompts: storage.getPrompts(),
+                    folders: storage.getFolders()
+                };
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'prompts_data.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('Données exportées avec succès !', 'success');
+            } catch (error) {
+                showToast('Erreur lors de l\'exportation des données.', 'error');
+                console.error('Export error:', error);
+            }
         }
 
         function importData(event) {
@@ -950,16 +1021,17 @@
                         if (confirm('Ceci va remplacer vos prompts et dossiers existants. Continuer ?')) {
                             storage.savePrompts(importedData.prompts);
                             storage.saveFolders(importedData.folders);
-                            alert('Données importées avec succès !');
+                            showToast('Données importées avec succès !', 'success');
                             updatePromptCount();
                             renderFolders();
                             renderPromptLibrary();
                         }
                     } else {
-                        alert('Fichier JSON invalide : structure attendue {prompts: [], folders: []}.');
+                        showToast('Fichier JSON invalide : structure attendue {prompts: [], folders: []}.', 'error');
                     }
                 } catch (error) {
-                    alert('Erreur lors de la lecture du fichier JSON : ' + error.message);
+                    showToast('Erreur lors de la lecture du fichier JSON : ' + error.message, 'error');
+                    console.error('Import error:', error);
                 }
             };
             reader.readAsText(file);
@@ -980,6 +1052,33 @@
         }
 
         // =================================================================================
+        // TOAST NOTIFICATIONS
+        // =================================================================================
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = '';
+            if (type === 'success') icon = '✔️';
+            else if (type === 'error') icon = '❌';
+            else icon = 'ℹ️';
+
+            toast.innerHTML = `<span class="toast-icon">${icon}</span>${message}`;
+            
+            toastContainer.appendChild(toast);
+
+            // Force reflow to enable transition
+            void toast.offsetWidth;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, duration);
+        }
+
+        // =================================================================================
         // UI & GENERAL
         // =================================================================================
         function updatePromptCount() { 
@@ -996,6 +1095,72 @@
         }
 
         // =================================================================================
+        // PROMPT EDITING
+        // =================================================================================
+        let editingPromptId = null; // To store the ID of the prompt being edited
+
+        function startEditingPrompt(promptId) {
+            const promptToEdit = storage.getPrompts().find(p => p.id === promptId);
+            if (!promptToEdit) {
+                showToast('Prompt non trouvé pour édition.', 'error');
+                return;
+            }
+
+            // Switch to freeform tab and populate fields
+            switchTab('freeform');
+            document.getElementById('freeform-prompt-content').value = promptToEdit.content;
+            document.getElementById('freeform-prompt-title').value = promptToEdit.title;
+            document.getElementById('freeform-prompt-category').value = promptToEdit.category;
+
+            // Change save button to update button
+            const saveBtn = document.getElementById('save-freeform-btn');
+            saveBtn.textContent = 'Mettre à jour le Prompt';
+            saveBtn.dataset.action = 'update';
+            editingPromptId = promptId; // Store the ID
+        }
+
+        function updateExistingPrompt() {
+            const content = document.getElementById('freeform-prompt-content').value.trim();
+            let title = document.getElementById('freeform-prompt-title').value.trim();
+            const category = document.getElementById('freeform-prompt-category').value;
+
+            if (!content) {
+                showToast('Veuillez saisir un prompt pour le sauvegarder.', 'error');
+                return;
+            }
+
+            if (!title) {
+                title = content.substring(0, 40) + (content.length > 40 ? '...' : '');
+            }
+
+            const updatedPrompt = {
+                id: editingPromptId,
+                title: title,
+                content: content,
+                category: category
+            };
+
+            if (storage.updatePrompt(updatedPrompt)) {
+                showToast('Prompt mis à jour avec succès !', 'success');
+                // Reset freeform form and switch back to library
+                resetFreeformForm();
+                switchTab('library');
+            } else {
+                showToast('Erreur lors de la mise à jour du prompt.', 'error');
+            }
+        }
+
+        function resetFreeformForm() {
+            document.getElementById('freeform-prompt-content').value = '';
+            document.getElementById('freeform-prompt-title').value = '';
+            document.getElementById('freeform-prompt-category').value = 'général';
+            const saveBtn = document.getElementById('save-freeform-btn');
+            saveBtn.textContent = 'Sauvegarder le Prompt';
+            saveBtn.dataset.action = 'save';
+            editingPromptId = null;
+        }
+
+        // =================================================================================
         // EVENT LISTENERS
         // =================================================================================
         function setupEventListeners() {
@@ -1009,12 +1174,27 @@
             document.getElementById('prev-btn').addEventListener('click', prevStep);
             
             // Freeform listeners
-            document.getElementById('save-freeform-btn').addEventListener('click', saveFreeformPrompt);
+            document.getElementById('save-freeform-btn').addEventListener('click', (e) => {
+                if (e.target.dataset.action === 'update') {
+                    updateExistingPrompt();
+                } else {
+                    saveFreeformPrompt();
+                }
+            });
 
             // Library listeners
             document.getElementById('search-input').addEventListener('input', renderPromptLibrary);
             document.getElementById('sort-select').addEventListener('change', renderPromptLibrary);
-            document.getElementById('new-folder-btn').addEventListener('click', () => { const name = prompt('Nom du nouveau dossier:'); if (name && name.trim()) { storage.saveFolder(name.trim()); renderFolders(); } });
+            document.getElementById('new-folder-btn').addEventListener('click', () => { 
+                const name = prompt('Nom du nouveau dossier:'); 
+                if (name && name.trim()) { 
+                    storage.saveFolder(name.trim()); 
+                    renderFolders(); 
+                    showToast('Dossier créé !', 'success');
+                } else if (name !== null) {
+                    showToast('Nom de dossier invalide.', 'error');
+                }
+            });
             
             // Folder list listeners
             document.getElementById('folder-list').addEventListener('click', e => {
@@ -1022,7 +1202,13 @@
                 const item = e.target.closest('.folder-item');
                 if (delBtn) { 
                     e.stopPropagation(); // Prevent folder selection
-                    if (confirm('Supprimer ce dossier ? (Les prompts ne seront pas supprimés)')) { storage.deleteFolder(delBtn.dataset.id); currentFolderId = 'all'; renderFolders(); renderPromptLibrary(); } 
+                    if (confirm('Supprimer ce dossier ? (Les prompts ne seront pas supprimés)')) { 
+                        storage.deleteFolder(delBtn.dataset.id); 
+                        currentFolderId = 'all'; 
+                        renderFolders(); 
+                        renderPromptLibrary(); 
+                        showToast('Dossier supprimé !', 'success');
+                    } 
                 }
                 else if (item) { currentFolderId = item.dataset.id; renderFolders(); renderPromptLibrary(); }
             });
@@ -1037,12 +1223,25 @@
                     const action = e.target.dataset.action;
                     if (action === 'copy') {
                         const prompt = storage.getPrompts().find(p=>p.id===promptId);
-                        if(prompt) navigator.clipboard.writeText(prompt.content).then(()=>alert('Prompt copié !'));
+                        if(prompt) {
+                            navigator.clipboard.writeText(prompt.content).then(()=>{
+                                showToast('Prompt copié !', 'success');
+                            }).catch(err => {
+                                showToast('Erreur lors de la copie.', 'error');
+                                console.error('Copy error:', err);
+                            });
+                        }
                     }
-                    if (action === 'delete' && confirm('Êtes-vous sûr de vouloir supprimer ce prompt ?')) { 
-                        storage.deletePrompt(promptId); 
-                        updatePromptCount(); 
-                        renderPromptLibrary(); 
+                    if (action === 'delete') {
+                        if (confirm('Êtes-vous sûr de vouloir supprimer ce prompt ?')) { 
+                            storage.deletePrompt(promptId); 
+                            updatePromptCount(); 
+                            renderPromptLibrary(); 
+                            showToast('Prompt supprimé !', 'success');
+                        } 
+                    }
+                    if (action === 'edit') {
+                        startEditingPrompt(promptId);
                     }
                 } else { 
                     // If not a button/select, open the modal
@@ -1056,6 +1255,7 @@
                 if(sel){ 
                     const promptId = sel.closest('.prompt-card').dataset.id;
                     storage.updatePromptFolder(promptId, sel.value); 
+                    showToast('Prompt déplacé !', 'info');
                     // Refresh list if user is not in "All" view
                     if(currentFolderId !== 'all') renderPromptLibrary(); 
                 } 
