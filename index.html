@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IDE de Prompts IA</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="app">
@@ -23,16 +23,28 @@
             </div>
         </aside>
         <main class="main-content">
-            <!-- ... Vos sections creator, freeform, library ... -->
+            <!-- Section Assistant -->
+            <div id="creator-section">
+                <!-- Le contenu de votre section "creator" va ici (non modifié) -->
+            </div>
 
-            <!-- NOUVELLE SECTION PLAYGROUND (à développer) -->
+            <!-- Section Saisie Libre -->
+            <div id="freeform-section" class="hidden">
+                 <!-- Le contenu de votre section "freeform" va ici (non modifié) -->
+            </div>
+
+            <!-- Section Bibliothèque -->
+            <div id="library-section" class="hidden">
+                 <!-- Le contenu de votre section "library" va ici (non modifié) -->
+            </div>
+
+            <!-- NOUVELLE SECTION PLAYGROUND -->
             <div id="playground-section" class="hidden">
                 <div class="page-header">
                     <h1 class="page-title">Playground A/B Test</h1>
                     <p class="page-subtitle">Testez et comparez différentes versions de vos prompts.</p>
                 </div>
                 <div class="wizard-container">
-                    <!-- Le contenu du playground viendra ici -->
                     <p>Bientôt disponible : une interface pour tester vos prompts côte à côte !</p>
                 </div>
             </div>
@@ -45,7 +57,7 @@
                 </div>
                 <div class="wizard-container">
                     <h3>Configuration de l'API</h3>
-                    <p style="color: var(--text-light); margin-bottom: 20px;">
+                    <p style="margin-bottom: 20px;">
                         Votre clé API est stockée de manière sécurisée dans votre navigateur et n'est jamais partagée.
                     </p>
                     <div class="form-group">
@@ -60,7 +72,11 @@
         </main>
     </div>
     
-    <!-- ... Vos sections modales et toast ... -->
-    <script src="app.js" defer></script>
+    <div id="prompt-modal" class="modal-overlay hidden">
+      <!-- Le contenu de votre modal va ici -->
+    </div>
+    <div id="toast-container"></div>
+
+    <script src="js/app.js" defer></script>
 </body>
 </html>
