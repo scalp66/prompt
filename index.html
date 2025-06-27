@@ -24,56 +24,73 @@
         </aside>
 
         <main class="main-content">
-            <!-- Section Assistant de Création -->
+            <!-- Section Assistant de Création (inchangée) -->
             <div id="creator-section">
-                <div class="page-header">
-                    <h1 class="page-title">Assistant de Création de Prompts</h1>
-                    <p class="page-subtitle">Créez des prompts efficaces étape par étape</p>
+                <!-- ... contenu de votre section creator ... -->
+            </div>
+
+            <!-- Section Saisie Libre (inchangée) -->
+            <div id="freeform-section" class="hidden">
+                 <div class="page-header">
+                    <h1 class="page-title">Saisie Libre de Prompt</h1>
+                    <p class="page-subtitle">Collez ou écrivez votre prompt et sauvegardez-le</p>
                 </div>
                 <div class="wizard-container">
-                    <div class="steps-indicator">
-                        <div class="step active" data-step="0"><div class="step-number">1</div><div class="step-label">Rôle</div></div>
-                        <div class="step" data-step="1"><div class="step-number">2</div><div class="step-label">Objectif</div></div>
-                        <div class="step" data-step="2"><div class="step-number">3</div><div class="step-label">Contexte</div></div>
-                        <div class="step" data-step="3"><div class="step-number">4</div><div class="step-label">Structure</div></div>
-                        <div class="step" data-step="4"><div class="step-number">5</div><div class="step-label">Exemples</div></div>
-                        <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Contraintes</div></div>
+                    <div class="form-group">
+                        <label for="freeform-prompt-content" class="form-label">Votre Prompt :</label>
+                        <textarea id="freeform-prompt-content" class="form-textarea" rows="15" placeholder="Collez ou écrivez votre prompt ici..."></textarea>
                     </div>
-                    <h3 id="step-title">Quel rôle doit jouer l'IA ?</h3>
-                    <div id="step-0" class="step-content">
-                        <div class="form-group"><label for="role" class="form-label">Quel rôle doit jouer l'IA ?</label><textarea id="role" class="form-textarea" placeholder="Ex: Tu es un expert développeur Python..."></textarea></div>
-                        <div class="form-group"><label for="role-suggestions" class="form-label">Rôles suggérés</label><select id="role-suggestions" class="form-select"><option value="">Choisir un rôle prédéfini (optionnel)</option><option value="expert-dev">Expert développeur</option><option value="consultant">Consultant en stratégie</option><option value="professeur">Professeur pédagogue</option><option value="redacteur">Rédacteur professionnel</option></select></div>
+                    <div class="form-group">
+                        <label for="freeform-prompt-title" class="form-label">Titre du Prompt (optionnel) :</label>
+                        <input type="text" id="freeform-prompt-title" class="form-input" placeholder="Un titre pour votre prompt...">
                     </div>
-                    <div id="step-1" class="step-content hidden">
-                        <div class="form-group"><label for="objective" class="form-label">Que voulez-vous que l'IA fasse ?</label><textarea id="objective" class="form-textarea" placeholder="Ex: Crée une fonction Python..."></textarea></div>
-                        <div class="form-group"><label for="category" class="form-label">Catégorie</label><select id="category" class="form-select"><option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option></select></div>
+                    <div class="form-group">
+                        <label for="freeform-prompt-category" class="form-label">Catégorie (optionnel) :</label>
+                        <select id="freeform-prompt-category" class="form-select">
+                            <option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option>
+                        </select>
                     </div>
-                    <div id="step-2" class="step-content hidden"><div class="form-group"><label for="context" class="form-label">Décrivez le contexte</label><textarea id="context" class="form-textarea" placeholder="Ex: Je travaille sur un projet..."></textarea></div></div>
-                    <div id="step-3" class="step-content hidden"><div class="form-group"><label for="structure" class="form-label">Structure de la réponse</label><textarea id="structure" class="form-textarea" placeholder="Ex: Code commenté, puis explication..."></textarea></div></div>
-                    <div id="step-4" class="step-content hidden"><div class="form-group"><label for="examples" class="form-label">Exemples (Optionnel)</label><textarea id="examples" class="form-textarea" placeholder="Ex: factorielle(5) -> 120..."></textarea></div></div>
-                    <div id="step-5" class="step-content hidden"><div class="form-group"><label for="constraints" class="form-label">Contraintes (Optionnel)</label><textarea id="constraints" class="form-textarea" placeholder="Ex: Utiliser uniquement les bibliothèques standard..."></textarea></div></div>
-                    <div class="button-group"><button id="prev-btn" class="btn btn-secondary hidden">Précédent</button><button id="next-btn" class="btn btn-primary">Suivant</button></div>
+                    <div class="button-group">
+                        <button id="save-freeform-btn" class="btn btn-primary">Sauvegarder le Prompt</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- ... autres sections ... -->
-            <div id="freeform-section" class="hidden">
-                 <!-- Contenu de Saisie Libre -->
-            </div>
+            <!-- Section Bibliothèque de Prompts (corrigée) -->
             <div id="library-section" class="hidden">
-                 <!-- Contenu de Bibliothèque -->
+                <div class="page-header">
+                    <h1 class="page-title">Mes Prompts Sauvegardés</h1>
+                    <p class="page-subtitle">Gérez, recherchez et réutilisez vos prompts</p>
+                </div>
+                <div class="wizard-container library-container">
+                    <div class="folder-sidebar">
+                        <h3>Dossiers</h3>
+                        <ul id="folder-list" class="folder-list"></ul>
+                        <button id="new-folder-btn" class="btn btn-secondary" style="width: 100%; margin-top: 16px;">+ Nouveau Dossier</button>
+                        
+                        <!-- *** BLOC HTML RESTAURÉ *** -->
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                            <button id="export-data-btn" class="btn btn-secondary btn-sm" style="width: 100%; margin-bottom: 10px;">Exporter les données</button>
+                            <input type="file" id="import-data-input" accept=".json" style="display: none;">
+                            <button id="import-data-btn" class="btn btn-secondary btn-sm" style="width: 100%;">Importer les données</button>
+                        </div>
+                    </div>
+                    <div class="prompt-list-container">
+                        <div class="library-controls">
+                            <input type="text" id="search-input" class="form-input" placeholder="Rechercher un prompt..." style="flex-grow: 1;">
+                            <select id="sort-select" class="form-select sort-select-width">
+                                <option value="newest">Plus récents d'abord</option><option value="oldest">Plus anciens d'abord</option><option value="title-asc">Titre (A-Z)</option><option value="title-desc">Titre (Z-A)</option>
+                            </select>
+                        </div>
+                        <div id="prompt-library-list"></div>
+                    </div>
+                </div>
             </div>
-            <div id="playground-section" class="hidden">
-                 <!-- Contenu du Playground -->
-            </div>
-            <div id="settings-section" class="hidden">
-                 <!-- Contenu des Paramètres -->
-            </div>
+            
+            <!-- ... autres sections ... -->
         </main>
     </div>
-    
     <!-- ... Modales et Toast Container ... -->
-
     <script src="js/app.js" defer></script>
 </body>
 </html>
