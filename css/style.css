@@ -802,3 +802,33 @@ body {
     }
 }
     </style>
+/* --- OUTIL DE LOG POUR LE DÉBOGAGE --- */
+#log-display {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 350px;
+    max-height: 200px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 8px;
+    border: 1px solid #444;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    overflow-y: auto;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column-reverse; /* Les nouveaux logs apparaissent en bas */
+}
+
+#log-display p {
+    margin: 0 0 5px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #333;
+    word-break: break-all;
+}
+
+#log-display .log-info { color: #87cefa; }
+#log-display .log-success { color: #90ee90; }
+#log-display .log-error { color: #f08080; }
