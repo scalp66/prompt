@@ -22,59 +22,118 @@
                 <p id="prompt-count">0 prompt sauvegardé</p>
             </div>
         </aside>
+
         <main class="main-content">
-            <!-- Section Assistant -->
+            <!-- Section Assistant de Création -->
             <div id="creator-section">
-                <!-- Le contenu de votre section "creator" va ici (non modifié) -->
+                <div class="page-header">
+                    <h1 class="page-title">Assistant de Création de Prompts</h1>
+                    <p class="page-subtitle">Créez des prompts efficaces étape par étape</p>
+                </div>
+                <div class="wizard-container">
+                    <div class="steps-indicator">
+                        <div class="step active" data-step="0"><div class="step-number">1</div><div class="step-label">Rôle</div></div>
+                        <div class="step" data-step="1"><div class="step-number">2</div><div class="step-label">Objectif</div></div>
+                        <div class="step" data-step="2"><div class="step-number">3</div><div class="step-label">Contexte</div></div>
+                        <div class="step" data-step="3"><div class="step-number">4</div><div class="step-label">Structure</div></div>
+                        <div class="step" data-step="4"><div class="step-number">5</div><div class="step-label">Exemples</div></div>
+                        <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Contraintes</div></div>
+                    </div>
+                    <h3 id="step-title">Quel rôle doit jouer l'IA ?</h3>
+                    <div id="step-0" class="step-content">
+                        <div class="form-group"><label class="form-label">Quel rôle doit jouer l'IA ?</label><textarea id="role" class="form-textarea" placeholder="Ex: Tu es un expert développeur Python..."></textarea></div>
+                        <div class="form-group"><label class="form-label">Rôles suggérés</label><select id="role-suggestions" class="form-select"><option value="">Choisir un rôle prédéfini (optionnel)</option><option value="expert-dev">Expert développeur</option><option value="consultant">Consultant en stratégie</option><option value="professeur">Professeur pédagogue</option><option value="redacteur">Rédacteur professionnel</option></select></div>
+                    </div>
+                    <div id="step-1" class="step-content hidden">
+                        <div class="form-group"><label class="form-label">Que voulez-vous que l'IA fasse ?</label><textarea id="objective" class="form-textarea" placeholder="Ex: Crée une fonction Python..."></textarea></div>
+                        <div class="form-group"><label class="form-label">Catégorie</label><select id="category" class="form-select"><option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option></select></div>
+                    </div>
+                    <div id="step-2" class="step-content hidden"><div class="form-group"><label class="form-label">Décrivez le contexte</label><textarea id="context" class="form-textarea" placeholder="Ex: Je travaille sur un projet..."></textarea></div></div>
+                    <div id="step-3" class="step-content hidden"><div class="form-group"><label class="form-label">Structure de la réponse</label><textarea id="structure" class="form-textarea" placeholder="Ex: Code commenté, puis explication..."></textarea></div></div>
+                    <div id="step-4" class="step-content hidden"><div class="form-group"><label class="form-label">Exemples (Optionnel)</label><textarea id="examples" class="form-textarea" placeholder="Ex: factorielle(5) -> 120..."></textarea></div></div>
+                    <div id="step-5" class="step-content hidden"><div class="form-group"><label class="form-label">Contraintes (Optionnel)</label><textarea id="constraints" class="form-textarea" placeholder="Ex: Utiliser uniquement les bibliothèques standard..."></textarea></div></div>
+                    <div id="quality-analyzer" class="quality-analyzer hidden"><div class="quality-score"><div id="score-circle" class="score-circle score-poor">0/5</div><div><h4 id="score-label">Qualité : À améliorer</h4><p>Votre prompt est analysé en temps réel</p></div></div><div id="suggestions-container" class="hidden"><h5>Suggestions d'amélioration :</h5><ul id="suggestions-list" class="suggestions-list"></ul></div></div>
+                    <div class="button-group"><button id="prev-btn" class="btn btn-secondary hidden">Précédent</button><button id="next-btn" class="btn btn-primary">Suivant</button></div>
+                </div>
             </div>
 
             <!-- Section Saisie Libre -->
             <div id="freeform-section" class="hidden">
-                 <!-- Le contenu de votre section "freeform" va ici (non modifié) -->
-            </div>
-
-            <!-- Section Bibliothèque -->
-            <div id="library-section" class="hidden">
-                 <!-- Le contenu de votre section "library" va ici (non modifié) -->
-            </div>
-
-            <!-- NOUVELLE SECTION PLAYGROUND -->
-            <div id="playground-section" class="hidden">
                 <div class="page-header">
-                    <h1 class="page-title">Playground A/B Test</h1>
-                    <p class="page-subtitle">Testez et comparez différentes versions de vos prompts.</p>
+                    <h1 class="page-title">Saisie Libre de Prompt</h1>
+                    <p class="page-subtitle">Collez ou écrivez votre prompt et sauvegardez-le</p>
                 </div>
                 <div class="wizard-container">
-                    <p>Bientôt disponible : une interface pour tester vos prompts côte à côte !</p>
-                </div>
-            </div>
-
-            <!-- NOUVELLE SECTION PARAMÈTRES -->
-            <div id="settings-section" class="hidden">
-                <div class="page-header">
-                    <h1 class="page-title">Paramètres</h1>
-                    <p class="page-subtitle">Gérez vos préférences et clés API.</p>
-                </div>
-                <div class="wizard-container">
-                    <h3>Configuration de l'API</h3>
-                    <p style="margin-bottom: 20px;">
-                        Votre clé API est stockée de manière sécurisée dans votre navigateur et n'est jamais partagée.
-                    </p>
                     <div class="form-group">
-                        <label for="api-key-input" class="form-label">Votre Clé API (ex: OpenAI)</label>
-                        <input type="password" id="api-key-input" class="form-input" placeholder="sk-...">
+                        <label for="freeform-prompt-content" class="form-label">Votre Prompt :</label>
+                        <textarea id="freeform-prompt-content" class="form-textarea" rows="15" placeholder="Collez ou écrivez votre prompt ici..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="freeform-prompt-title" class="form-label">Titre du Prompt (optionnel) :</label>
+                        <input type="text" id="freeform-prompt-title" class="form-input" placeholder="Un titre pour votre prompt...">
+                    </div>
+                    <div class="form-group">
+                        <label for="freeform-prompt-category" class="form-label">Catégorie (optionnel) :</label>
+                        <select id="freeform-prompt-category" class="form-select">
+                            <option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option>
+                        </select>
                     </div>
                     <div class="button-group">
-                        <button id="save-api-key-btn" class="btn btn-primary">Sauvegarder la Clé</button>
+                        <button id="save-freeform-btn" class="btn btn-primary">Sauvegarder le Prompt</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Section Bibliothèque de Prompts -->
+            <div id="library-section" class="hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Mes Prompts Sauvegardés</h1>
+                    <p class="page-subtitle">Gérez, recherchez et réutilisez vos prompts</p>
+                </div>
+                <div class="wizard-container library-container">
+                    <div class="folder-sidebar">
+                        <h3>Dossiers</h3>
+                        <ul id="folder-list" class="folder-list"></ul>
+                        <button id="new-folder-btn" class="btn btn-secondary" style="width: 100%; margin-top: 16px;">+ Nouveau Dossier</button>
+                    </div>
+                    <div class="prompt-list-container">
+                        <div class="library-controls">
+                            <input type="text" id="search-input" class="form-input" placeholder="Rechercher un prompt..." style="flex-grow: 1;">
+                            <select id="sort-select" class="form-select" style="width: 200px;">
+                                <option value="newest">Plus récents d'abord</option><option value="oldest">Plus anciens d'abord</option><option value="title-asc">Titre (A-Z)</option><option value="title-desc">Titre (Z-A)</option>
+                            </select>
+                        </div>
+                        <div id="prompt-library-list"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section Playground -->
+            <div id="playground-section" class="hidden">
+                <div class="page-header"><h1 class="page-title">Playground A/B Test</h1><p class="page-subtitle">Testez et comparez différentes versions de vos prompts.</p></div>
+                <div class="wizard-container"><p>Bientôt disponible : une interface pour tester vos prompts côte à côte !</p></div>
+            </div>
+
+            <!-- Section Paramètres -->
+            <div id="settings-section" class="hidden">
+                <div class="page-header"><h1 class="page-title">Paramètres</h1><p class="page-subtitle">Gérez vos préférences et clés API.</p></div>
+                <div class="wizard-container">
+                    <h3>Configuration de l'API</h3>
+                    <p style="margin-bottom: 20px;">Votre clé API est stockée de manière sécurisée dans votre navigateur et n'est jamais partagée.</p>
+                    <div class="form-group"><label for="api-key-input" class="form-label">Votre Clé API (ex: OpenAI)</label><input type="password" id="api-key-input" class="form-input" placeholder="sk-..."></div>
+                    <div class="button-group"><button id="save-api-key-btn" class="btn btn-primary">Sauvegarder la Clé</button></div>
                 </div>
             </div>
         </main>
     </div>
-    
+
     <div id="prompt-modal" class="modal-overlay hidden">
-      <!-- Le contenu de votre modal va ici -->
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="modal-title" class="modal-title">Titre du Prompt</h3><button id="modal-close-btn" class="modal-close-btn">×</button></div>
+            <div id="modal-body" class="modal-body"></div>
+        </div>
     </div>
+    
     <div id="toast-container"></div>
 
     <script src="js/app.js" defer></script>
