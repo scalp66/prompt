@@ -13,7 +13,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
@@ -394,28 +394,31 @@
         }
         
         .prompt-card {
-            background: #f8fafc;
+            background: #fff;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 16px;
             margin-bottom: 16px;
             cursor: pointer;
-            transition: box-shadow 0.2s;
+            transition: box-shadow 0.2s, transform 0.2s;
         }
         
         .prompt-card:hover {
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transform: translateY(-2px);
         }
         
         .prompt-card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            margin-bottom: 8px;
         }
         
         .prompt-card-title {
-            margin: 0 0 8px 0;
+            margin: 0;
             color: #1e293b;
+            font-weight: 600;
         }
         
         .prompt-card-category {
@@ -435,6 +438,7 @@
             max-height: 100px;
             overflow: hidden;
             text-overflow: ellipsis;
+            line-height: 1.5;
         }
         
         .prompt-card-footer {
@@ -448,8 +452,10 @@
             font-size: 12px;
         }
         
-        .prompt-card-actions button, .prompt-card-actions select {
-            margin-left: 8px;
+        .prompt-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         /* Modal Styles */
@@ -459,11 +465,19 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(17, 24, 39, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-overlay:not(.hidden) {
+            opacity: 1;
+            visibility: visible;
         }
         
         .modal-content {
@@ -475,6 +489,12 @@
             max-height: 80vh;
             display: flex;
             flex-direction: column;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay:not(.hidden) .modal-content {
+            transform: scale(1);
         }
         
         .modal-header {
@@ -482,6 +502,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            flex-shrink: 0;
         }
         
         .modal-title {
@@ -492,9 +513,10 @@
         .modal-close-btn {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
             color: #64748b;
+            line-height: 1;
         }
         
         .modal-body {
@@ -505,6 +527,7 @@
             border-radius: 8px;
             border: 1px solid #e2e8f0;
             color: #374151;
+            line-height: 1.6;
         }
 
         /* Responsive */
@@ -558,28 +581,15 @@
     <div class="app">
         <div class="sidebar">
             <h2>Créateur de Prompts IA</h2>
-            
-            <button class="nav-item active" data-tab="creator">
-                <span class="nav-icon">🚀</span>
-                Assistant
-            </button>
-
-            <button class="nav-item" data-tab="library">
-                <span class="nav-icon">📚</span>
-                Mes Prompts
-            </button>
-            
-            <button class="nav-item" data-tab="help">
-                <span class="nav-icon">❓</span>
-                Guide
-            </button>
-            
+            <button class="nav-item active" data-tab="creator"><span class="nav-icon">🚀</span> Assistant</button>
+            <button class="nav-item" data-tab="freeform"><span class="nav-icon">📝</span> Saisie Libre</button>
+            <button class="nav-item" data-tab="library"><span class="nav-icon">📚</span> Mes Prompts</button>
+            <button class="nav-item" data-tab="help"><span class="nav-icon">❓</span> Guide</button>
             <div class="stats-box">
                 <h4>📊 Vos prompts</h4>
                 <p id="prompt-count">0 prompt sauvegardé</p>
             </div>
         </div>
-        
         <div class="main-content">
             <!-- Section Assistant de Création -->
             <div id="creator-section">
@@ -587,7 +597,6 @@
                     <h1 class="page-title">Assistant de Création de Prompts</h1>
                     <p class="page-subtitle">Créez des prompts efficaces étape par étape</p>
                 </div>
-                
                 <div class="wizard-container">
                     <div class="steps-indicator">
                         <div class="step active" data-step="0"><div class="step-number">1</div><div class="step-label">Rôle</div></div>
@@ -597,63 +606,51 @@
                         <div class="step" data-step="4"><div class="step-number">5</div><div class="step-label">Exemples</div></div>
                         <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Contraintes</div></div>
                     </div>
-
                     <h3 id="step-title">Quel rôle doit jouer l'IA ?</h3>
-
                     <div id="step-0" class="step-content">
-                        <div class="form-group">
-                            <label class="form-label">Quel rôle doit jouer l'IA ?</label>
-                            <textarea id="role" class="form-textarea" placeholder="Ex: Tu es un expert développeur Python..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Rôles suggérés</label>
-                            <select id="role-suggestions" class="form-select">
-                                <option value="">Choisir un rôle prédéfini (optionnel)</option>
-                                <option value="expert-dev">Expert développeur</option>
-                                <option value="consultant">Consultant en stratégie</option>
-                                <option value="professeur">Professeur pédagogue</option>
-                                <option value="redacteur">Rédacteur professionnel</option>
-                            </select>
-                        </div>
+                        <div class="form-group"><label class="form-label">Quel rôle doit jouer l'IA ?</label><textarea id="role" class="form-textarea" placeholder="Ex: Tu es un expert développeur Python..."></textarea></div>
+                        <div class="form-group"><label class="form-label">Rôles suggérés</label><select id="role-suggestions" class="form-select"><option value="">Choisir un rôle prédéfini (optionnel)</option><option value="expert-dev">Expert développeur</option><option value="consultant">Consultant en stratégie</option><option value="professeur">Professeur pédagogue</option><option value="redacteur">Rédacteur professionnel</option></select></div>
                     </div>
                     <div id="step-1" class="step-content hidden">
-                        <div class="form-group">
-                            <label class="form-label">Que voulez-vous que l'IA fasse ?</label>
-                            <textarea id="objective" class="form-textarea" placeholder="Ex: Crée une fonction Python..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Catégorie</label>
-                            <select id="category" class="form-select">
-                                <option value="général">Général</option>
-                                <option value="code">Programmation</option>
-                                <option value="rédaction">Rédaction</option>
-                                <option value="analyse">Analyse</option>
-                                <option value="créatif">Créatif</option>
-                            </select>
-                        </div>
+                        <div class="form-group"><label class="form-label">Que voulez-vous que l'IA fasse ?</label><textarea id="objective" class="form-textarea" placeholder="Ex: Crée une fonction Python..."></textarea></div>
+                        <div class="form-group"><label class="form-label">Catégorie</label><select id="category" class="form-select"><option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option></select></div>
                     </div>
                     <div id="step-2" class="step-content hidden"><div class="form-group"><label class="form-label">Décrivez le contexte</label><textarea id="context" class="form-textarea" placeholder="Ex: Je travaille sur un projet..."></textarea></div></div>
                     <div id="step-3" class="step-content hidden"><div class="form-group"><label class="form-label">Structure de la réponse</label><textarea id="structure" class="form-textarea" placeholder="Ex: Code commenté, puis explication..."></textarea></div></div>
                     <div id="step-4" class="step-content hidden"><div class="form-group"><label class="form-label">Exemples (Optionnel)</label><textarea id="examples" class="form-textarea" placeholder="Ex: factorielle(5) -> 120..."></textarea></div></div>
                     <div id="step-5" class="step-content hidden"><div class="form-group"><label class="form-label">Contraintes (Optionnel)</label><textarea id="constraints" class="form-textarea" placeholder="Ex: Utiliser uniquement les bibliothèques standard..."></textarea></div></div>
+                    <div id="quality-analyzer" class="quality-analyzer hidden"><div class="quality-score"><div id="score-circle" class="score-circle score-poor">0/5</div><div><h4 id="score-label">Qualité : À améliorer</h4><p>Votre prompt est analysé en temps réel</p></div></div><div id="suggestions-container" class="hidden"><h5>Suggestions d'amélioration :</h5><ul id="suggestions-list" class="suggestions-list"></ul></div></div>
+                    <div class="button-group"><button id="prev-btn" class="btn btn-secondary hidden">Précédent</button><button id="next-btn" class="btn btn-primary">Suivant</button></div>
+                </div>
+            </div>
 
-                    <div id="quality-analyzer" class="quality-analyzer hidden">
-                        <div class="quality-score">
-                            <div id="score-circle" class="score-circle score-poor">0/5</div>
-                            <div>
-                                <h4 id="score-label">Qualité : À améliorer</h4>
-                                <p>Votre prompt est analysé en temps réel</p>
-                            </div>
-                        </div>
-                        <div id="suggestions-container" class="hidden">
-                            <h5>Suggestions d'amélioration :</h5>
-                            <ul id="suggestions-list" class="suggestions-list"></ul>
-                        </div>
+            <!-- Section Saisie Libre -->
+            <div id="freeform-section" class="hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Saisie Libre de Prompt</h1>
+                    <p class="page-subtitle">Collez ou écrivez votre prompt et sauvegardez-le</p>
+                </div>
+                <div class="wizard-container">
+                    <div class="form-group">
+                        <label class="form-label">Votre Prompt :</label>
+                        <textarea id="freeform-prompt-content" class="form-textarea" rows="15" placeholder="Collez ou écrivez votre prompt ici..."></textarea>
                     </div>
-
+                    <div class="form-group">
+                        <label class="form-label">Titre du Prompt (optionnel) :</label>
+                        <input type="text" id="freeform-prompt-title" class="form-input" placeholder="Un titre pour votre prompt...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Catégorie (optionnel) :</label>
+                        <select id="freeform-prompt-category" class="form-select">
+                            <option value="général">Général</option>
+                            <option value="code">Programmation</option>
+                            <option value="rédaction">Rédaction</option>
+                            <option value="analyse">Analyse</option>
+                            <option value="créatif">Créatif</option>
+                        </select>
+                    </div>
                     <div class="button-group">
-                        <button id="prev-btn" class="btn btn-secondary hidden">Précédent</button>
-                        <button id="next-btn" class="btn btn-primary" disabled>Suivant</button>
+                        <button id="save-freeform-btn" class="btn btn-primary">Sauvegarder le Prompt</button>
                     </div>
                 </div>
             </div>
@@ -667,10 +664,13 @@
                 <div class="wizard-container library-container">
                     <div class="folder-sidebar">
                         <h3>Dossiers</h3>
-                        <ul id="folder-list" class="folder-list">
-                            <!-- Les dossiers seront injectés ici -->
-                        </ul>
+                        <ul id="folder-list" class="folder-list"></ul>
                         <button id="new-folder-btn" class="btn btn-secondary" style="width: 100%; margin-top: 16px;">+ Nouveau Dossier</button>
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                            <button id="export-data-btn" class="btn btn-secondary btn-sm" style="width: 100%; margin-bottom: 10px;">Exporter les données</button>
+                            <input type="file" id="import-data-input" accept=".json" style="display: none;">
+                            <button id="import-data-btn" class="btn btn-secondary btn-sm" style="width: 100%;">Importer les données</button>
+                        </div>
                     </div>
                     <div class="prompt-list-container">
                         <div class="library-controls">
@@ -682,38 +682,30 @@
                                 <option value="title-desc">Titre (Z-A)</option>
                             </select>
                         </div>
-                        <div id="prompt-library-list">
-                            <!-- Les prompts seront injectés ici -->
-                        </div>
+                        <div id="prompt-library-list"></div>
                     </div>
                 </div>
             </div>
-
-            <!-- Section Aide -->
             <div id="help-section" class="hidden">
-                <!-- Contenu de l'aide inchangé -->
+                 <div class="page-header"><h2 class="page-title">Guide d'utilisation</h2><p class="page-subtitle">Comment créer des prompts efficaces</p></div>
+                 <div class="wizard-container"><p>Contenu du guide...</p></div>
             </div>
         </div>
     </div>
-
-    <!-- Modal pour voir le prompt complet -->
     <div id="prompt-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title" class="modal-title">Titre du Prompt</h3>
-                <button id="modal-close-btn" class="modal-close-btn">&times;</button>
-            </div>
-            <div id="modal-body" class="modal-body">
-                <!-- Contenu du prompt injecté ici -->
-            </div>
+            <div class="modal-header"><h3 id="modal-title" class="modal-title">Titre du Prompt</h3><button id="modal-close-btn" class="modal-close-btn">&times;</button></div>
+            <div id="modal-body" class="modal-body"></div>
         </div>
     </div>
 
     <script>
-        // Variables globales
+        // =================================================================================
+        // STATE & CONFIG
+        // =================================================================================
         let currentStep = 0;
         let formData = { role: '', objective: '', context: '', structure: '', examples: '', constraints: '', category: 'général' };
-        let currentFolderId = 'all'; // 'all', 'uncategorized', or a folder ID
+        let currentFolderId = 'all';
 
         const steps = [
             { key: 'role', title: 'Quel rôle doit jouer l\'IA ?' },
@@ -723,8 +715,17 @@
             { key: 'examples', title: 'Avez-vous des exemples ?' },
             { key: 'constraints', title: 'Des contraintes spécifiques ?' }
         ];
+        
+        const predefinedRoles = {
+            'expert-dev': 'Tu es un expert développeur avec 10+ ans d\'expérience en programmation. Tu maîtrises les bonnes pratiques, l\'architecture logicielle et l\'optimisation de code.',
+            'consultant': 'Tu es un consultant en stratégie d\'entreprise avec une expertise en transformation digitale et amélioration des processus.',
+            'professeur': 'Tu es un professeur pédagogue qui sait expliquer des concepts complexes de manière simple et accessible, avec des exemples concrets.',
+            'redacteur': 'Tu es un rédacteur professionnel spécialisé dans la création de contenu engageant, optimisé SEO et adapté à différents publics.'
+        };
 
-        // Utilitaires de stockage
+        // =================================================================================
+        // LOCAL STORAGE UTILITIES
+        // =================================================================================
         const storage = {
             getPrompts: () => JSON.parse(localStorage.getItem('prompts')) || [],
             savePrompts: (prompts) => localStorage.setItem('prompts', JSON.stringify(prompts)),
@@ -733,28 +734,21 @@
 
             savePrompt: function(promptData) {
                 const prompts = this.getPrompts();
-                const newPrompt = {
-                    id: Date.now().toString(),
-                    createdAt: new Date().toISOString(),
-                    folderId: null, // Par défaut, pas dans un dossier
-                    ...promptData
-                };
+                const newPrompt = { id: Date.now().toString(), createdAt: new Date().toISOString(), folderId: null, ...promptData };
                 prompts.push(newPrompt);
                 this.savePrompts(prompts);
                 return newPrompt;
             },
             
             deletePrompt: function(id) {
-                let prompts = this.getPrompts();
-                prompts = prompts.filter(p => p.id !== id);
-                this.savePrompts(prompts);
+                this.savePrompts(this.getPrompts().filter(p => p.id !== id));
             },
 
             updatePromptFolder: function(promptId, folderId) {
-                let prompts = this.getPrompts();
+                const prompts = this.getPrompts();
                 const promptIndex = prompts.findIndex(p => p.id === promptId);
                 if (promptIndex > -1) {
-                    prompts[promptIndex].folderId = folderId;
+                    prompts[promptIndex].folderId = folderId === 'null' ? null : folderId;
                     this.savePrompts(prompts);
                 }
             },
@@ -768,46 +762,126 @@
             },
 
             deleteFolder: function(folderId) {
-                let folders = this.getFolders();
-                folders = folders.filter(f => f.id !== folderId);
-                this.saveFolders(folders);
-
-                // Un-assign prompts from the deleted folder
-                let prompts = this.getPrompts();
-                prompts.forEach(p => {
-                    if (p.folderId === folderId) {
-                        p.folderId = null;
-                    }
-                });
+                this.saveFolders(this.getFolders().filter(f => f.id !== folderId));
+                const prompts = this.getPrompts();
+                prompts.forEach(p => { if (p.folderId === folderId) p.folderId = null; });
                 this.savePrompts(prompts);
             }
         };
 
-        // --- Fonctions de la Bibliothèque de Prompts ---
+        // =================================================================================
+        // PROMPT WIZARD & QUALITY ANALYSIS
+        // =================================================================================
+        function analyzePrompt(prompt) {
+            const analysis = { score: 0, issues: [], suggestions: [] };
+            if (!prompt || prompt.trim().length === 0) return { score: 0, issues: ['Prompt vide'], suggestions: ['Commencez par définir un rôle pour l\'IA'] };
+            let score = 5;
+            if (!/\b(tu es|vous êtes|agis comme|joue le rôle|expert|spécialiste|professionnel)\b/i.test(prompt)) { analysis.issues.push('Aucun rôle défini'); analysis.suggestions.push('Commencez par "Tu es un expert en..." ou "Agis comme..."'); score--; }
+            if (!/\b(je veux|génère|crée|écris|analyse|explique|aide|fais|objectif)\b/i.test(prompt)) { analysis.issues.push('Objectif peu clair'); analysis.suggestions.push('Précisez clairement ce que vous voulez que l\'IA fasse'); score--; }
+            if (prompt.length < 80) { analysis.issues.push('Manque de contexte'); analysis.suggestions.push('Ajoutez plus de détails sur le contexte et vos attentes'); score--; }
+            if (prompt.length > 150 && !prompt.includes('\n') && !prompt.includes('.')) { analysis.suggestions.push('Structurez avec des sauts de ligne ou des points'); score -= 0.5; }
+            if (/\b(chose|truc|quelque chose|bien|bon)\b/i.test(prompt)) { analysis.issues.push('Termes trop vagues'); analysis.suggestions.push('Remplacez les termes vagues par des descriptions précises'); score--; }
+            analysis.score = Math.max(0, Math.min(5, Math.round(score * 10) / 10));
+            return analysis;
+        }
 
+        function updateQualityAnalyzer() {
+            const prompt = getPromptPreview();
+            document.getElementById('quality-analyzer').classList.toggle('hidden', !prompt);
+            if (!prompt) return;
+            const analysis = analyzePrompt(prompt);
+            document.getElementById('score-circle').textContent = analysis.score + '/5';
+            document.getElementById('score-circle').className = 'score-circle ' + getScoreClass(analysis.score);
+            document.getElementById('score-label').textContent = 'Qualité : ' + getScoreLabel(analysis.score);
+            const suggestionsContainer = document.getElementById('suggestions-container');
+            suggestionsContainer.classList.toggle('hidden', analysis.suggestions.length === 0);
+            const suggestionsList = document.getElementById('suggestions-list');
+            suggestionsList.innerHTML = '';
+            analysis.suggestions.forEach(suggestion => { suggestionsList.innerHTML += `<li class="suggestion-item">${suggestion}</li>`; });
+        }
+
+        function getScoreClass(score) { if (score >= 4.5) return 'score-excellent'; if (score >= 3.5) return 'score-good'; if (score >= 2) return 'score-average'; return 'score-poor'; }
+        function getScoreLabel(score) { if (score >= 4.5) return 'Excellent'; if (score >= 3.5) return 'Bon'; if (score >= 2) return 'Moyen'; return 'À améliorer'; }
+
+        function getPromptPreview() {
+            return [
+                formData.role, 
+                formData.objective ? `Objectif: ${formData.objective}` : '',
+                formData.context ? `Contexte: ${formData.context}` : '',
+                formData.structure ? `Structure: ${formData.structure}` : '',
+                formData.examples ? `Exemples: ${formData.examples}` : '',
+                formData.constraints ? `Contraintes: ${formData.constraints}` : ''
+            ].filter(Boolean).join('\n\n');
+        }
+
+        function updateStepDisplay() {
+            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+            document.getElementById('step-title').textContent = steps[currentStep].title;
+            document.querySelectorAll('.step').forEach((el, idx) => { el.classList.remove('active', 'completed'); if (idx === currentStep) el.classList.add('active'); else if (idx < currentStep) el.classList.add('completed'); });
+            document.getElementById('prev-btn').classList.toggle('hidden', currentStep === 0);
+            document.getElementById('next-btn').textContent = (currentStep === steps.length - 1) ? 'Créer le Prompt' : 'Suivant';
+            // Rendre les étapes optionnelles: le bouton Suivant n'est plus désactivé par défaut
+            document.getElementById('next-btn').disabled = false;
+        }
+
+        function nextStep() { if (currentStep < steps.length - 1) { currentStep++; updateStepDisplay(); } else { generatePrompt(); } }
+        function prevStep() { if (currentStep > 0) { currentStep--; updateStepDisplay(); } }
+
+        function generatePrompt() {
+            storage.savePrompt({ title: (formData.objective || 'Nouveau Prompt').substring(0, 40) + '...', content: getPromptPreview(), category: formData.category, tags: ['wizard-generated'] });
+            alert('Prompt créé avec succès !');
+            resetForm();
+            updatePromptCount();
+        }
+
+        function resetForm() {
+            currentStep = 0;
+            formData = { role: '', objective: '', context: '', structure: '', examples: '', constraints: '', category: 'général' };
+            ['role', 'objective', 'context', 'structure', 'examples', 'constraints'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('category').value = 'général';
+            document.getElementById('role-suggestions').value = '';
+            updateStepDisplay();
+            updateQualityAnalyzer();
+        }
+
+        // =================================================================================
+        // FREEFORM PROMPT INPUT
+        // =================================================================================
+        function saveFreeformPrompt() {
+            const content = document.getElementById('freeform-prompt-content').value.trim();
+            let title = document.getElementById('freeform-prompt-title').value.trim();
+            const category = document.getElementById('freeform-prompt-category').value;
+
+            if (!content) {
+                alert('Veuillez saisir un prompt pour le sauvegarder.');
+                return;
+            }
+
+            if (!title) {
+                title = content.substring(0, 40) + (content.length > 40 ? '...' : '');
+            }
+
+            storage.savePrompt({ title: title, content: content, category: category, tags: ['freeform'] });
+            alert('Prompt sauvegardé avec succès !');
+            document.getElementById('freeform-prompt-content').value = '';
+            document.getElementById('freeform-prompt-title').value = '';
+            updatePromptCount();
+        }
+
+        // =================================================================================
+        // PROMPT LIBRARY & FOLDERS
+        // =================================================================================
         function renderPromptLibrary() {
             const listContainer = document.getElementById('prompt-library-list');
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
             const sortValue = document.getElementById('sort-select').value;
-
             let prompts = storage.getPrompts();
 
-            // 1. Filtrage par dossier
-            if (currentFolderId === 'uncategorized') {
-                prompts = prompts.filter(p => !p.folderId);
-            } else if (currentFolderId !== 'all') {
-                prompts = prompts.filter(p => p.folderId === currentFolderId);
-            }
-
-            // 2. Filtrage par recherche
-            if (searchTerm) {
-                prompts = prompts.filter(p => 
-                    p.title.toLowerCase().includes(searchTerm) || 
-                    p.content.toLowerCase().includes(searchTerm)
-                );
-            }
-
-            // 3. Tri
+            if (currentFolderId === 'uncategorized') prompts = prompts.filter(p => !p.folderId);
+            else if (currentFolderId !== 'all') prompts = prompts.filter(p => p.folderId === currentFolderId);
+            if (searchTerm) prompts = prompts.filter(p => p.title.toLowerCase().includes(searchTerm) || p.content.toLowerCase().includes(searchTerm));
+            
             prompts.sort((a, b) => {
                 switch (sortValue) {
                     case 'oldest': return new Date(a.createdAt) - new Date(b.createdAt);
@@ -817,32 +891,21 @@
                 }
             });
 
-            // 4. Rendu
-            listContainer.innerHTML = '';
-            if (prompts.length === 0) {
-                listContainer.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px 0;">Aucun prompt trouvé.</p>';
-                return;
-            }
-
+            listContainer.innerHTML = prompts.length === 0 ? '<p style="text-align: center; color: #64748b; padding: 40px 0;">Aucun prompt trouvé.</p>' : '';
+            const folders = storage.getFolders();
             prompts.forEach(prompt => {
+                const folderOptions = folders.map(f => `<option value="${f.id}" ${prompt.folderId === f.id ? 'selected' : ''}>${f.name}</option>`).join('');
+                const selectHTML = `<select class="form-select btn-sm" data-action="move"><option value="null" ${!prompt.folderId ? 'selected' : ''}>Non classé</option>${folderOptions}</select>`;
                 const card = document.createElement('div');
                 card.className = 'prompt-card';
                 card.dataset.id = prompt.id;
-                
                 card.innerHTML = `
-                    <div class="prompt-card-header">
-                        <h4 class="prompt-card-title">${prompt.title}</h4>
-                        <span class="prompt-card-category">${prompt.category}</span>
-                    </div>
+                    <div class="prompt-card-header"><h4 class="prompt-card-title">${prompt.title}</h4><span class="prompt-card-category">${prompt.category}</span></div>
                     <p class="prompt-card-content">${prompt.content}</p>
                     <div class="prompt-card-footer">
                         <small class="prompt-card-date">Créé le: ${new Date(prompt.createdAt).toLocaleDateString('fr-FR')}</small>
-                        <div class="prompt-card-actions">
-                            <button class="btn btn-secondary btn-sm" data-action="copy">Copier</button>
-                            <button class="btn btn-secondary btn-sm" data-action="delete" style="background-color: #fee2e2; color: #ef4444;">Supprimer</button>
-                        </div>
-                    </div>
-                `;
+                        <div class="prompt-card-actions">${selectHTML}<button class="btn btn-secondary btn-sm" data-action="copy">Copier</button><button class="btn btn-secondary btn-sm" data-action="delete" style="background-color: #fee2e2; color: #ef4444;">Supprimer</button></div>
+                    </div>`;
                 listContainer.appendChild(card);
             });
         }
@@ -850,157 +913,178 @@
         function renderFolders() {
             const folderList = document.getElementById('folder-list');
             const folders = storage.getFolders();
-            folderList.innerHTML = `
-                <li class="folder-item ${currentFolderId === 'all' ? 'active' : ''}" data-id="all">Tous les prompts</li>
-                <li class="folder-item ${currentFolderId === 'uncategorized' ? 'active' : ''}" data-id="uncategorized">Non classés</li>
-            `;
-            folders.forEach(folder => {
-                folderList.innerHTML += `
-                    <li class="folder-item ${currentFolderId === folder.id ? 'active' : ''}" data-id="${folder.id}">
-                        <span>${folder.name}</span>
-                        <button class="delete-folder-btn" data-id="${folder.id}">&times;</button>
-                    </li>
-                `;
-            });
+            folderList.innerHTML = `<li class="folder-item ${currentFolderId === 'all' ? 'active' : ''}" data-id="all">Tous les prompts</li><li class="folder-item ${currentFolderId === 'uncategorized' ? 'active' : ''}" data-id="uncategorized">Non classés</li>`;
+            folders.forEach(folder => { folderList.innerHTML += `<li class="folder-item ${currentFolderId === folder.id ? 'active' : ''}" data-id="${folder.id}"><span>${folder.name}</span><button class="delete-folder-btn" data-id="${folder.id}">&times;</button></li>`; });
         }
 
-        function openPromptModal(promptId) {
-            const prompt = storage.getPrompts().find(p => p.id === promptId);
-            if (!prompt) return;
-
-            document.getElementById('modal-title').textContent = prompt.title;
-            document.getElementById('modal-body').textContent = prompt.content;
-            document.getElementById('prompt-modal').classList.remove('hidden');
+        // =================================================================================
+        // IMPORT / EXPORT DATA
+        // =================================================================================
+        function exportData() {
+            const data = {
+                prompts: storage.getPrompts(),
+                folders: storage.getFolders()
+            };
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'prompts_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('Données exportées avec succès !');
         }
 
-        function closePromptModal() {
-            document.getElementById('prompt-modal').classList.add('hidden');
-        }
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        // --- Initialisation et Event Listeners ---
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // ... (code de l'assistant de création, analyseur, etc. reste ici)
-            
-            // Event listeners pour la bibliothèque
-            document.getElementById('search-input').addEventListener('input', renderPromptLibrary);
-            document.getElementById('sort-select').addEventListener('change', renderPromptLibrary);
-            
-            document.getElementById('new-folder-btn').addEventListener('click', () => {
-                const folderName = prompt('Entrez le nom du nouveau dossier :');
-                if (folderName && folderName.trim()) {
-                    storage.saveFolder(folderName.trim());
-                    renderFolders();
-                }
-            });
-
-            document.getElementById('folder-list').addEventListener('click', (e) => {
-                if (e.target.closest('.delete-folder-btn')) {
-                    const folderId = e.target.closest('.delete-folder-btn').dataset.id;
-                    if (confirm('Voulez-vous vraiment supprimer ce dossier ? Les prompts qu\'il contient seront conservés comme "Non classés".')) {
-                        storage.deleteFolder(folderId);
-                        currentFolderId = 'all';
-                        renderFolders();
-                        renderPromptLibrary();
-                    }
-                } else if (e.target.closest('.folder-item')) {
-                    currentFolderId = e.target.closest('.folder-item').dataset.id;
-                    renderFolders();
-                    renderPromptLibrary();
-                }
-            });
-
-            document.getElementById('prompt-library-list').addEventListener('click', (e) => {
-                const button = e.target.closest('button');
-                if (button) { // Clic sur un bouton
-                    const action = button.dataset.action;
-                    const promptId = button.closest('.prompt-card').dataset.id;
-                    const prompt = storage.getPrompts().find(p => p.id === promptId);
-
-                    if (action === 'copy' && prompt) {
-                        navigator.clipboard.writeText(prompt.content).then(() => alert('Prompt copié !'));
-                    }
-                    if (action === 'delete') {
-                        if (confirm('Supprimer ce prompt ?')) {
-                            storage.deletePrompt(promptId);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.prompts && importedData.folders) {
+                        if (confirm('Ceci va remplacer vos prompts et dossiers existants. Continuer ?')) {
+                            storage.savePrompts(importedData.prompts);
+                            storage.saveFolders(importedData.folders);
+                            alert('Données importées avec succès !');
                             updatePromptCount();
+                            renderFolders();
                             renderPromptLibrary();
                         }
+                    } else {
+                        alert('Fichier JSON invalide : structure attendue {prompts: [], folders: []}.');
                     }
-                } else { // Clic sur la carte elle-même
-                    const card = e.target.closest('.prompt-card');
-                    if (card) {
-                        openPromptModal(card.dataset.id);
-                    }
+                } catch (error) {
+                    alert('Erreur lors de la lecture du fichier JSON : ' + error.message);
                 }
-            });
+            };
+            reader.readAsText(file);
+        }
 
-            // Event listeners pour le modal
-            document.getElementById('modal-close-btn').addEventListener('click', closePromptModal);
-            document.getElementById('prompt-modal').addEventListener('click', (e) => {
-                if (e.target.id === 'prompt-modal') {
-                    closePromptModal();
-                }
-            });
+        // =================================================================================
+        // MODAL
+        // =================================================================================
+        function openPromptModal(promptId) { 
+            const prompt = storage.getPrompts().find(p => p.id === promptId); 
+            if (!prompt) return; 
+            document.getElementById('modal-title').textContent = prompt.title; 
+            document.getElementById('modal-body').textContent = prompt.content; 
+            document.getElementById('prompt-modal').classList.remove('hidden'); 
+        }
+        function closePromptModal() { 
+            document.getElementById('prompt-modal').classList.add('hidden'); 
+        }
 
-            // Navigation
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    switchTab(this.getAttribute('data-tab'));
-                });
-            });
-
-            // Initialisation
-            updateStepDisplay();
-            updatePromptCount();
-        });
+        // =================================================================================
+        // UI & GENERAL
+        // =================================================================================
+        function updatePromptCount() { 
+            const count = storage.getPrompts().length; 
+            document.getElementById('prompt-count').textContent = `${count} prompt${count > 1 ? 's' : ''} sauvegardé${count > 1 ? 's' : ''}`; 
+        }
 
         function switchTab(tabName) {
-            ['creator', 'library', 'help'].forEach(id => {
-                document.getElementById(id + '-section').classList.add('hidden');
-            });
+            ['creator', 'freeform', 'library', 'help'].forEach(id => document.getElementById(id + '-section').classList.add('hidden'));
             document.getElementById(tabName + '-section').classList.remove('hidden');
-
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
-            if (tabName === 'library') {
-                currentFolderId = 'all';
-                renderFolders();
-                renderPromptLibrary();
-            }
-        }
-        
-        function updatePromptCount() {
-            const count = storage.getPrompts().length;
-            const text = count <= 1 ? `${count} prompt sauvegardé` : `${count} prompts sauvegardés`;
-            document.getElementById('prompt-count').textContent = text;
+            if (tabName === 'library') { currentFolderId = 'all'; renderFolders(); renderPromptLibrary(); }
         }
 
-        // ... (Le reste des fonctions de l'assistant de création : updateStepDisplay, nextStep, prevStep, generatePrompt, etc.)
-        // NOTE: Le code de l'assistant est omis pour la lisibilité mais doit être conservé.
-        // Seule la fonction generatePrompt est légèrement modifiée pour le titre.
-        
-        function generatePrompt() {
-            const promptContent = getPromptPreview();
+        // =================================================================================
+        // EVENT LISTENERS
+        // =================================================================================
+        function setupEventListeners() {
+            // Wizard listeners
+            document.getElementById('role').addEventListener('input', function() { formData.role = this.value; updateQualityAnalyzer(); updateStepDisplay(); });
+            document.getElementById('role-suggestions').addEventListener('change', function() { if (this.value && predefinedRoles[this.value]) { document.getElementById('role').value = predefinedRoles[this.value]; formData.role = predefinedRoles[this.value]; updateQualityAnalyzer(); updateStepDisplay(); } });
+            document.getElementById('objective').addEventListener('input', function() { formData.objective = this.value; updateQualityAnalyzer(); updateStepDisplay(); });
+            ['context', 'structure', 'examples', 'constraints'].forEach(id => document.getElementById(id).addEventListener('input', function() { formData[id] = this.value; updateQualityAnalyzer(); }));
+            document.getElementById('category').addEventListener('change', function() { formData.category = this.value; });
+            document.getElementById('next-btn').addEventListener('click', nextStep);
+            document.getElementById('prev-btn').addEventListener('click', prevStep);
             
-            storage.savePrompt({
-                title: (formData.objective || 'Nouveau Prompt').substring(0, 40) + '...',
-                content: promptContent,
-                category: formData.category,
-                tags: ['wizard-generated']
+            // Freeform listeners
+            document.getElementById('save-freeform-btn').addEventListener('click', saveFreeformPrompt);
+
+            // Library listeners
+            document.getElementById('search-input').addEventListener('input', renderPromptLibrary);
+            document.getElementById('sort-select').addEventListener('change', renderPromptLibrary);
+            document.getElementById('new-folder-btn').addEventListener('click', () => { const name = prompt('Nom du nouveau dossier:'); if (name && name.trim()) { storage.saveFolder(name.trim()); renderFolders(); } });
+            
+            // Folder list listeners
+            document.getElementById('folder-list').addEventListener('click', e => {
+                const delBtn = e.target.closest('.delete-folder-btn');
+                const item = e.target.closest('.folder-item');
+                if (delBtn) { 
+                    e.stopPropagation(); // Prevent folder selection
+                    if (confirm('Supprimer ce dossier ? (Les prompts ne seront pas supprimés)')) { storage.deleteFolder(delBtn.dataset.id); currentFolderId = 'all'; renderFolders(); renderPromptLibrary(); } 
+                }
+                else if (item) { currentFolderId = item.dataset.id; renderFolders(); renderPromptLibrary(); }
+            });
+            
+            // Prompt list listeners (for actions and modal opening)
+            document.getElementById('prompt-library-list').addEventListener('click', e => {
+                const card = e.target.closest('.prompt-card');
+                if (!card) return;
+                const promptId = card.dataset.id;
+                // Check if a button or select was the target
+                if (e.target.closest('button, select')) { 
+                    const action = e.target.dataset.action;
+                    if (action === 'copy') {
+                        const prompt = storage.getPrompts().find(p=>p.id===promptId);
+                        if(prompt) navigator.clipboard.writeText(prompt.content).then(()=>alert('Prompt copié !'));
+                    }
+                    if (action === 'delete' && confirm('Êtes-vous sûr de vouloir supprimer ce prompt ?')) { 
+                        storage.deletePrompt(promptId); 
+                        updatePromptCount(); 
+                        renderPromptLibrary(); 
+                    }
+                } else { 
+                    // If not a button/select, open the modal
+                    openPromptModal(promptId); 
+                }
             });
 
-            alert('Prompt créé avec succès !');
+            // Listener for moving a prompt to a folder
+            document.getElementById('prompt-library-list').addEventListener('change', e => { 
+                const sel = e.target.closest('select[data-action="move"]'); 
+                if(sel){ 
+                    const promptId = sel.closest('.prompt-card').dataset.id;
+                    storage.updatePromptFolder(promptId, sel.value); 
+                    // Refresh list if user is not in "All" view
+                    if(currentFolderId !== 'all') renderPromptLibrary(); 
+                } 
+            });
             
-            resetForm();
-            updatePromptCount();
+            // Import/Export listeners
+            document.getElementById('export-data-btn').addEventListener('click', exportData);
+            document.getElementById('import-data-btn').addEventListener('click', () => document.getElementById('import-data-input').click());
+            document.getElementById('import-data-input').addEventListener('change', importData);
+
+            // Modal listeners
+            document.getElementById('modal-close-btn').addEventListener('click', closePromptModal);
+            document.getElementById('prompt-modal').addEventListener('click', e => { 
+                // Close if clicking on the overlay itself, not the content
+                if (e.target.id === 'prompt-modal') closePromptModal(); 
+            });
+            
+            // Main navigation
+            document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', function() { switchTab(this.getAttribute('data-tab')); }));
         }
-        
-        // Le reste des fonctions (resetForm, getPromptPreview, analyzePrompt, etc.) sont nécessaires
-        // et doivent être incluses ici. Pour la concision de cet exemple, elles ne sont pas toutes répétées.
-        // Assurez-vous que toutes les fonctions de la version précédente sont présentes.
-        
+
+        // =================================================================================
+        // INITIALIZATION
+        // =================================================================================
+        document.addEventListener('DOMContentLoaded', () => { 
+            setupEventListeners(); 
+            updateStepDisplay(); 
+            updatePromptCount(); 
+        });
     </script>
 </body>
 </html>
