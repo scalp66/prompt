@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         globalClickHandler(e) {
             const target = e.target;
+            if (target.closest('#modal-close-btn') || target.id === 'prompt-modal') { return ui.closePromptModal(); }
             if (target.closest('.nav-item')) return ui.switchTab(target.closest('.nav-item').dataset.tab);
             if (target.closest('#next-btn')) { if (state.currentStep < WIZARD_STEPS.length - 1) { state.currentStep++; ui.updateStepDisplay(); } else { const p = logic.buildFinalPrompt(); if (!p) return ui.showToast('Prompt vide.', 'error'); logic.saveNewPrompt({ title: (state.formData.objective || 'Nouveau Prompt').substring(0, 40), content: p, category: state.formData.category || 'général' }); ui.showToast('Prompt créé !', 'success'); ui.resetWizardForm(); ui.updatePromptCount(); } }
             else if (target.closest('#prev-btn')) { if (state.currentStep > 0) { state.currentStep--; ui.updateStepDisplay(); } }
@@ -105,15 +106,13 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (target.closest('.delete-folder-btn')) { const id=target.dataset.id; if(confirm('Supprimer dossier?')){logic.deleteFolder(id);state.currentFolderId='all';ui.renderFolders();ui.renderPromptLibrary();} }
             else if (target.closest('.folder-item')) { state.currentFolderId = target.closest('.folder-item').dataset.id; ui.renderFolders(); ui.renderPromptLibrary(); }
             else if (target.closest('#export-data-btn')) { const d={prompts:storage.getPrompts(),folders:storage.getFolders()}; const s=JSON.stringify(d,null,2); const b=new Blob([s],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`prompt_export.json`; a.click(); URL.revokeObjectURL(a.href); }
-            const card = e.target.closest('.prompt-card');
-            if (card && !e.target.closest('[data-action]')) return ui.openPromptModal(card.dataset.id);
+            const card = target.closest('.prompt-card'); if (card && !target.closest('[data-action]')) return ui.openPromptModal(card.dataset.id);
             const cardAction = target.closest('.prompt-card [data-action]');
             if (cardAction) { const a=cardAction.dataset.action, id=cardAction.closest('.prompt-card').dataset.id;
                 if (a==='delete'){if(confirm('Supprimer?')){logic.deletePrompt(id);ui.renderPromptLibrary();}}
                 else if (a==='copy'){const p=storage.getPrompts().find(p=>p.id===id);if(p)navigator.clipboard.writeText(p.content).then(()=>ui.showToast('Copié!','success'));}
                 else if (a==='edit'){ state.editingPromptId=id; const p=storage.getPrompts().find(p=>p.id===id); ui.switchTab('freeform'); document.getElementById('freeform-prompt-title').value=p.title; document.getElementById('freeform-prompt-content').value=p.content; document.getElementById('freeform-prompt-category').value=p.category; document.getElementById('save-freeform-btn').textContent='Mettre à jour';}
             }
-            if (e.target.closest('#modal-close-btn') || e.target.id === 'prompt-modal') { ui.closePromptModal(); }
         },
         globalInputHandler(e) {
             const target = e.target;
