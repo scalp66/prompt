@@ -24,9 +24,6 @@
         </aside>
 
         <main class="main-content">
-            <!-- =================================================================================
-            SECTION : Assistant de Création (Maintenant complète)
-            ================================================================================== -->
             <div id="creator-section">
                 <div class="page-header">
                     <h1 class="page-title">Assistant de Création de Prompts</h1>
@@ -54,15 +51,25 @@
                     <div id="step-3" class="step-content hidden"><div class="form-group"><label for="structure" class="form-label">Structure de la réponse</label><textarea id="structure" class="form-textarea" placeholder="Ex: Code commenté, puis explication..."></textarea></div></div>
                     <div id="step-4" class="step-content hidden"><div class="form-group"><label for="examples" class="form-label">Exemples (Optionnel)</label><textarea id="examples" class="form-textarea" placeholder="Ex: factorielle(5) -> 120..."></textarea></div></div>
                     <div id="step-5" class="step-content hidden"><div class="form-group"><label for="constraints" class="form-label">Contraintes (Optionnel)</label><textarea id="constraints" class="form-textarea" placeholder="Ex: Utiliser uniquement les bibliothèques standard..."></textarea></div></div>
+                    
+                    <div id="quality-analyzer" class="quality-analyzer hidden">
+                        <div class="quality-score">
+                            <div id="score-circle" class="score-circle score-poor">0/5</div>
+                            <div><h4 id="score-label">Qualité : À améliorer</h4><p>Votre prompt est analysé en temps réel</p></div>
+                        </div>
+                        <div id="suggestions-container" class="hidden">
+                            <h5>Suggestions d'amélioration :</h5><ul id="suggestions-list" class="suggestions-list"></ul>
+                        </div>
+                    </div>
+
                     <div class="button-group"><button id="prev-btn" class="btn btn-secondary hidden">Précédent</button><button id="next-btn" class="btn btn-primary">Suivant</button></div>
                 </div>
             </div>
             
-            <!-- Les autres sections restent des coquilles vides pour l'instant -->
-            <div id="freeform-section" class="hidden"><h1>Saisie Libre</h1><p>Contenu à venir...</p></div>
-            <div id="library-section" class="hidden"><h1>Bibliothèque</h1><p>Contenu à venir...</p></div>
-            <div id="playground-section" class="hidden"><h1>Playground</h1><p>Contenu à venir...</p></div>
-            <div id="settings-section" class="hidden"><h1>Paramètres</h1><p>Contenu à venir...</p></div>
+            <div id="freeform-section" class="hidden"><h1>Saisie Libre</h1></div>
+            <div id="library-section" class="hidden"><h1>Bibliothèque</h1></div>
+            <div id="playground-section" class="hidden"><h1>Playground</h1></div>
+            <div id="settings-section" class="hidden"><h1>Paramètres</h1></div>
         </main>
     </div>
     <script src="js/app.js" defer></script>
