@@ -1,73 +1,169 @@
-// js/app.js (Étape 1 : Assistant Complet et Fonctionnel)
 document.addEventListener('DOMContentLoaded', () => {
 
-    let currentStep = 0;
-    const formData = {};
+    // --- ÉTAT GLOBAL DE L'APPLICATION ---
+    const state = {
+        currentStep: 0,
+        formData: {},
+        currentFolderId: 'all',
+        editingPromptId: null,
+    };
+
+    // --- CONSTANTES ---
     const WIZARD_STEPS = [
         { title: 'Qui est l\'IA ? (Persona)' }, { title: 'Quel est l\'objectif final ?' },
         { title: 'Comment l\'IA doit-elle raisonner ?' }, { title: 'Quel contexte fournir ?' },
         { title: 'Quelle est la structure de la réponse ?' }, { title: 'Quelles sont les contraintes ?' }
     ];
 
-    // --- Fonctions UI ---
-    const switchTab = (tabName) => {
-        document.querySelectorAll('.main-content > div').forEach(s => s.classList.add('hidden'));
-        document.getElementById(`${tabName}-section`)?.classList.remove('hidden');
-        document.querySelectorAll('.sidebar .nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tabName));
+    // --- MODULE DE STOCKAGE (localStorage) ---
+    const storage = {
+        getPrompts: () => JSON.parse(localStorage.getItem('prompts')) || [],
+        savePrompts: (prompts) => localStorage.setItem('prompts', JSON.stringify(prompts)),
+        getFolders: () => JSON.parse(localStorage.getItem('prompt_folders')) || [],
+        saveFolders: (folders) => localStorage.setItem('prompt_folders', JSON.stringify(folders)),
     };
 
-    const updateStepDisplay = () => {
-        const creatorSection = document.getElementById('creator-section');
-        creatorSection.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
-        document.getElementById(`step-${currentStep}`)?.classList.remove('hidden');
-        document.getElementById('step-title').textContent = WIZARD_STEPS[currentStep].title;
-        creatorSection.querySelectorAll('.steps-indicator .step').forEach((el, idx) => {
-            el.classList.remove('active', 'completed');
-            if (idx === currentStep) el.classList.add('active');
-            else if (idx < currentStep) el.classList.add('completed');
-        });
-        document.getElementById('prev-btn').classList.toggle('hidden', currentStep === 0);
-        document.getElementById('next-btn').textContent = (currentStep === WIZARD_STEPS.length - 1) ? 'Créer le Prompt' : 'Suivant';
+    // --- MODULE UI (Manipulation du DOM) ---
+    const ui = {
+        showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✔️' : 'ℹ️'}</span> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000);
+        },
+        updatePromptCount: () => { document.getElementById('prompt-count').textContent = `${storage.getPrompts().length} prompt(s) sauvegardé(s)`; },
+        switchTab: (tabName) => {
+            document.querySelectorAll('.main-content > div[id$="-section"]').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`${tabName}-section`)?.classList.remove('hidden');
+            document.querySelectorAll('.sidebar .nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tabName));
+            if (tabName === 'library') { ui.renderFolders(); ui.renderPromptLibrary(); }
+            if (tabName === 'freeform') { ui.resetFreeformForm(); }
+        },
+        updateStepDisplay: () => {
+            const creatorSection = document.getElementById('creator-section');
+            if(!creatorSection) return;
+            creatorSection.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`step-${state.currentStep}`)?.classList.remove('hidden');
+            document.getElementById('step-title').textContent = WIZARD_STEPS[state.currentStep].title;
+            creatorSection.querySelectorAll('.steps-indicator .step').forEach((el, idx) => { el.classList.toggle('active', idx === state.currentStep); el.classList.toggle('completed', idx < state.currentStep); });
+            document.getElementById('prev-btn').classList.toggle('hidden', state.currentStep === 0);
+            document.getElementById('next-btn').textContent = (state.currentStep === WIZARD_STEPS.length - 1) ? 'Créer le Prompt' : 'Suivant';
+        },
+        resetWizardForm: () => { state.currentStep = 0; state.formData = {}; document.querySelectorAll('#creator-section input:not([type=checkbox]), #creator-section textarea, #creator-section select').forEach(el => el.value = ''); const c=document.getElementById('use_chain_of_thought');if(c)c.checked=true; ui.updateStepDisplay(); },
+        resetFreeformForm: () => { state.editingPromptId = null; document.getElementById('freeform-prompt-title').value = ''; document.getElementById('freeform-prompt-content').value = ''; document.getElementById('freeform-prompt-category').value = 'général'; document.getElementById('save-freeform-btn').textContent = 'Sauvegarder le Prompt'; },
+        renderFolders: () => {
+            const list = document.getElementById('folder-list');
+            list.innerHTML = `<li class="folder-item ${state.currentFolderId === 'all' ? 'active' : ''}" data-id="all">Tous les prompts</li><li class="folder-item ${state.currentFolderId === 'uncategorized' ? 'active' : ''}" data-id="uncategorized">Non classés</li>`;
+            storage.getFolders().forEach(f => { list.innerHTML += `<li class="folder-item ${state.currentFolderId === f.id ? 'active' : ''}" data-id="${f.id}"><span>${f.name}</span><button class="delete-folder-btn" data-id="${f.id}">×</button></li>`; });
+        },
+        renderPromptLibrary: () => {
+            let prompts = storage.getPrompts();
+            if (state.currentFolderId === 'uncategorized') prompts = prompts.filter(p => !p.folderId);
+            else if (state.currentFolderId !== 'all') prompts = prompts.filter(p => p.folderId === state.currentFolderId);
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            if (searchTerm) prompts = prompts.filter(p => (p.title + p.content).toLowerCase().includes(searchTerm));
+            const container = document.getElementById('prompt-library-list');
+            container.innerHTML = prompts.length === 0 ? '<p style="text-align: center; color: #718096; padding: 40px 0;">Aucun prompt trouvé.</p>' : '';
+            prompts.forEach(p => {
+                const card = document.createElement('div'); card.className = 'prompt-card'; card.dataset.id = p.id;
+                const folderOptions = storage.getFolders().map(f => `<option value="${f.id}" ${p.folderId === f.id ? 'selected' : ''}>${f.name}</option>`).join('');
+                const selectHTML = `<select class="form-select btn-sm" data-action="move"><option value="null" ${!p.folderId ? 'selected' : ''}>Non classé</option>${folderOptions}</select>`;
+                card.innerHTML = `<div class="prompt-card-header"><h4 class="prompt-card-title">${p.title}</h4><span class="prompt-card-category">${p.category}</span></div><p class="prompt-card-content">${p.content}</p><div class="prompt-card-footer"><small class="prompt-card-date">Créé le: ${new Date(p.createdAt).toLocaleDateString('fr-FR')}</small><div class="prompt-card-actions">${selectHTML}<button class="btn btn-secondary btn-sm" data-action="edit">Modifier</button><button class="btn btn-secondary btn-sm" data-action="copy">Copier</button><button class="btn btn-secondary btn-sm" data-action="delete" style="background-color:#fee2e2;color:#ef4444;">Supprimer</button></div></div>`;
+                container.appendChild(card);
+            });
+        },
     };
 
-    // --- Écouteurs d'événements ---
-    document.querySelector('.sidebar nav').addEventListener('click', (e) => {
-        const navButton = e.target.closest('.nav-item');
-        if (navButton) switchTab(navButton.dataset.tab);
-    });
-
-    const creatorSection = document.getElementById('creator-section');
-    if (creatorSection) {
-        // Clics sur les boutons de l'assistant
-        creatorSection.addEventListener('click', (e) => {
-            if (e.target.closest('#next-btn')) {
-                if (currentStep < WIZARD_STEPS.length - 1) {
-                    currentStep++;
-                    updateStepDisplay();
-                } else {
-                    alert('Logique de création à implémenter.');
+    // --- GESTIONNAIRES D'ÉVÉNEMENTS (HANDLERS) ---
+    const handlers = {
+        saveNewPrompt(promptData) {
+            const prompts = storage.getPrompts();
+            prompts.push({ id: Date.now().toString(), createdAt: new Date().toISOString(), ...promptData });
+            storage.savePrompts(prompts);
+            ui.updatePromptCount();
+        },
+        updatePrompt(id, promptData) {
+            const prompts = storage.getPrompts();
+            const index = prompts.findIndex(p => p.id === id);
+            if (index > -1) prompts[index] = { ...prompts[index], ...promptData };
+            storage.savePrompts(prompts);
+        },
+        deletePrompt(id) {
+            storage.savePrompts(storage.getPrompts().filter(p => p.id !== id));
+            ui.updatePromptCount();
+        },
+        handleGlobalClick(e) {
+            const target = e.target;
+            // Navigation
+            const navButton = target.closest('.nav-item');
+            if (navButton) return ui.switchTab(navButton.dataset.tab);
+            // Assistant
+            if (target.closest('#next-btn')) {
+                if (state.currentStep < WIZARD_STEPS.length - 1) { state.currentStep++; ui.updateStepDisplay(); }
+                else {
+                    let promptParts = [];
+                    if (state.formData.persona_role) promptParts.push(`**Persona:**\nTu es un ${state.formData.persona_role}, ${state.formData.persona_context || ''}. Ton style est ${state.formData.persona_style || 'clair'}.`);
+                    if (state.formData.objective) promptParts.push(`**Objectif:**\n${state.formData.objective}`);
+                    if (state.formData.use_chain_of_thought || state.formData.methodology) promptParts.push(`**Méthodologie:**\n${state.formData.use_chain_of_thought ? 'Réfléchis étape par étape. ' : ''}${state.formData.methodology || ''}`);
+                    if (state.formData.context) promptParts.push(`**Contexte:**\n${state.formData.context}`);
+                    if (state.formData.structure) promptParts.push(`**Structure:**\n${state.formData.structure}`);
+                    if (state.formData.constraints) promptParts.push(`**Contraintes:**\n${state.formData.constraints}`);
+                    const finalPrompt = promptParts.join('\n\n---\n\n');
+                    if (!finalPrompt) return ui.showToast('Prompt vide.', 'error');
+                    handlers.saveNewPrompt({ title: (state.formData.objective || 'Nouveau Prompt').substring(0, 40), content: finalPrompt, category: state.formData.category || 'général' });
+                    ui.showToast('Prompt créé !', 'success');
+                    ui.resetWizardForm();
                 }
-            } else if (e.target.closest('#prev-btn')) {
-                if (currentStep > 0) {
-                    currentStep--;
-                    updateStepDisplay();
+            } else if (target.closest('#prev-btn')) { if (state.currentStep > 0) { state.currentStep--; ui.updateStepDisplay(); } }
+            // Saisie Libre
+            else if (target.closest('#save-freeform-btn')) {
+                const content = document.getElementById('freeform-prompt-content').value.trim();
+                let title = document.getElementById('freeform-prompt-title').value.trim();
+                if (!content) return ui.showToast('Contenu vide.', 'error');
+                if (!title) title = content.substring(0, 40) + '...';
+                const promptData = { title, content, category: document.getElementById('freeform-prompt-category').value };
+                if (state.editingPromptId) { handlers.updatePrompt(state.editingPromptId, promptData); ui.showToast('Prompt mis à jour !', 'success'); }
+                else { handlers.saveNewPrompt(promptData); ui.showToast('Prompt sauvegardé !', 'success'); }
+                ui.switchTab('library');
+            }
+            // Bibliothèque
+            else if (target.closest('#new-folder-btn')) { const name = prompt('Nom du dossier:'); if(name && name.trim()){ storage.saveFolder(name.trim()); ui.renderFolders(); } }
+            else if (target.closest('.delete-folder-btn')) { const id = target.closest('.delete-folder-btn').dataset.id; if(confirm('Supprimer ce dossier ?')){ storage.deleteFolder(id); state.currentFolderId = 'all'; ui.renderFolders(); ui.renderPromptLibrary();} }
+            else if (target.closest('.folder-item')) { state.currentFolderId = target.closest('.folder-item').dataset.id; ui.renderFolders(); ui.renderPromptLibrary(); }
+            const cardAction = target.closest('.prompt-card [data-action]');
+            if (cardAction) {
+                const action = cardAction.dataset.action;
+                const id = cardAction.closest('.prompt-card').dataset.id;
+                if (action === 'delete') { if (confirm('Supprimer ce prompt ?')) { handlers.deletePrompt(id); ui.renderPromptLibrary(); } }
+                else if (action === 'copy') { const p = storage.getPrompts().find(p => p.id === id); if (p) navigator.clipboard.writeText(p.content).then(() => ui.showToast('Copié !', 'success')); }
+                else if (action === 'edit') {
+                    state.editingPromptId = id;
+                    const p = storage.getPrompts().find(p => p.id === id);
+                    ui.switchTab('freeform');
+                    document.getElementById('freeform-prompt-title').value = p.title;
+                    document.getElementById('freeform-prompt-content').value = p.content;
+                    document.getElementById('freeform-prompt-category').value = p.category;
+                    document.getElementById('save-freeform-btn').textContent = 'Mettre à jour';
                 }
             }
-        });
+        },
+        handleGlobalInput(e) {
+            const target = e.target;
+            const wizardInput = target.closest('#creator-section input, #creator-section textarea, #creator-section select');
+            if (wizardInput) { formData[wizardInput.id] = wizardInput.type === 'checkbox' ? wizardInput.checked : wizardInput.value; }
+            if (target.closest('#search-input, #sort-select')) { ui.renderPromptLibrary(); }
+        }
+    };
 
-        // Saisie dans les champs de l'assistant
-        creatorSection.addEventListener('input', (e) => {
-            const inputElement = e.target.closest('input, textarea, select');
-            if (inputElement) {
-                formData[inputElement.id] = inputElement.type === 'checkbox' ? inputElement.checked : inputElement.value;
-                console.clear();
-                console.log("Données du formulaire actuelles :", formData);
-            }
-        });
-    }
-
-    // --- Initialisation ---
-    switchTab('creator');
-    updateStepDisplay();
-    console.log("Application initialisée. Assistant prêt.");
+    // --- INITIALISATION ---
+    document.querySelector('.app').addEventListener('click', handlers.handleGlobalClick);
+    document.querySelector('.app').addEventListener('input', handlers.handleGlobalInput);
+    document.getElementById('import-data-btn').addEventListener('click', () => document.getElementById('import-data-input').click());
+    // ... (Logique pour l'import/export à ajouter si nécessaire)
+    ui.switchTab('creator');
+    ui.updatePromptCount();
 });
