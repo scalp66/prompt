@@ -24,7 +24,41 @@
         </aside>
 
         <main class="main-content">
-            <div id="creator-section"><h1>Assistant</h1><p>Contenu à venir...</p></div>
+            <!-- =================================================================================
+            SECTION : Assistant de Création (Maintenant complète)
+            ================================================================================== -->
+            <div id="creator-section">
+                <div class="page-header">
+                    <h1 class="page-title">Assistant de Création de Prompts</h1>
+                    <p class="page-subtitle">Créez des prompts efficaces étape par étape</p>
+                </div>
+                <div class="wizard-container">
+                    <div class="steps-indicator">
+                        <div class="step active" data-step="0"><div class="step-number">1</div><div class="step-label">Rôle</div></div>
+                        <div class="step" data-step="1"><div class="step-number">2</div><div class="step-label">Objectif</div></div>
+                        <div class="step" data-step="2"><div class="step-number">3</div><div class="step-label">Contexte</div></div>
+                        <div class="step" data-step="3"><div class="step-number">4</div><div class="step-label">Structure</div></div>
+                        <div class="step" data-step="4"><div class="step-number">5</div><div class="step-label">Exemples</div></div>
+                        <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Contraintes</div></div>
+                    </div>
+                    <h3 id="step-title">Quel rôle doit jouer l'IA ?</h3>
+                    <div id="step-0" class="step-content">
+                        <div class="form-group"><label for="role" class="form-label">Quel rôle doit jouer l'IA ?</label><textarea id="role" class="form-textarea" placeholder="Ex: Tu es un expert développeur Python..."></textarea></div>
+                        <div class="form-group"><label for="role-suggestions" class="form-label">Rôles suggérés</label><select id="role-suggestions" class="form-select"><option value="">Choisir un rôle prédéfini (optionnel)</option><option value="expert-dev">Expert développeur</option><option value="consultant">Consultant en stratégie</option><option value="professeur">Professeur pédagogue</option><option value="redacteur">Rédacteur professionnel</option></select></div>
+                    </div>
+                    <div id="step-1" class="step-content hidden">
+                        <div class="form-group"><label for="objective" class="form-label">Que voulez-vous que l'IA fasse ?</label><textarea id="objective" class="form-textarea" placeholder="Ex: Crée une fonction Python..."></textarea></div>
+                        <div class="form-group"><label for="category" class="form-label">Catégorie</label><select id="category" class="form-select"><option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option></select></div>
+                    </div>
+                    <div id="step-2" class="step-content hidden"><div class="form-group"><label for="context" class="form-label">Décrivez le contexte</label><textarea id="context" class="form-textarea" placeholder="Ex: Je travaille sur un projet..."></textarea></div></div>
+                    <div id="step-3" class="step-content hidden"><div class="form-group"><label for="structure" class="form-label">Structure de la réponse</label><textarea id="structure" class="form-textarea" placeholder="Ex: Code commenté, puis explication..."></textarea></div></div>
+                    <div id="step-4" class="step-content hidden"><div class="form-group"><label for="examples" class="form-label">Exemples (Optionnel)</label><textarea id="examples" class="form-textarea" placeholder="Ex: factorielle(5) -> 120..."></textarea></div></div>
+                    <div id="step-5" class="step-content hidden"><div class="form-group"><label for="constraints" class="form-label">Contraintes (Optionnel)</label><textarea id="constraints" class="form-textarea" placeholder="Ex: Utiliser uniquement les bibliothèques standard..."></textarea></div></div>
+                    <div class="button-group"><button id="prev-btn" class="btn btn-secondary hidden">Précédent</button><button id="next-btn" class="btn btn-primary">Suivant</button></div>
+                </div>
+            </div>
+            
+            <!-- Les autres sections restent des coquilles vides pour l'instant -->
             <div id="freeform-section" class="hidden"><h1>Saisie Libre</h1><p>Contenu à venir...</p></div>
             <div id="library-section" class="hidden"><h1>Bibliothèque</h1><p>Contenu à venir...</p></div>
             <div id="playground-section" class="hidden"><h1>Playground</h1><p>Contenu à venir...</p></div>
