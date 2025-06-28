@@ -1,122 +1,177 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // =================================================================================
-    // OUTIL DE LOG - NOTRE MEILLEUR AMI
+    // ÉTAT CENTRALISÉ DE L'APPLICATION
     // =================================================================================
-    const logDisplay = document.getElementById('log-display');
-    function logToScreen(message, type = 'info') {
-        if (!logDisplay) {
-            console.error("L'élément de log n'existe pas !");
-            return;
-        }
-        const logEntry = document.createElement('p');
-        const timestamp = new Date().toLocaleTimeString();
-        logEntry.innerHTML = `[${timestamp}] ${message}`;
-        logEntry.className = `log-${type}`;
-        logDisplay.prepend(logEntry);
-        while (logDisplay.children.length > 20) {
-            logDisplay.removeChild(logDisplay.lastChild);
-        }
+    const state = {
+        currentStep: 0,
+        formData: {},
+        currentFolderId: 'all',
+        editingPromptId: null,
+    };
+
+    // =================================================================================
+    // CONSTANTES ET CONFIGURATION
+    // =================================================================================
+    const WIZARD_STEPS = [
+        { key: 'role', title: 'Quel rôle doit jouer l\'IA ?' }, { key: 'objective', title: 'Quel est votre objectif ?' },
+        { key: 'context', title: 'Quel contexte l\'IA doit-elle connaître ?' }, { key: 'structure', title: 'Comment structurer la réponse ?' },
+        { key: 'examples', title: 'Avez-vous des exemples ?' }, { key: 'constraints', title: 'Des contraintes spécifiques ?' }
+    ];
+    const PREDEFINED_ROLES = {
+        'expert-dev': 'Tu es un expert développeur avec 10+ ans d\'expérience...', 'consultant': 'Tu es un consultant en stratégie d\'entreprise...',
+        'professeur': 'Tu es un professeur pédagogue...', 'redacteur': 'Tu es un rédacteur professionnel...'
+    };
+    
+    // =================================================================================
+    // MODULE DE STOCKAGE (localStorage)
+    // =================================================================================
+    const storage = {
+        getPrompts: () => JSON.parse(localStorage.getItem('prompts')) || [],
+        savePrompts: (prompts) => localStorage.setItem('prompts', JSON.stringify(prompts)),
+        getFolders: () => JSON.parse(localStorage.getItem('prompt_folders')) || [],
+        saveFolders: (folders) => localStorage.setItem('prompt_folders', JSON.stringify(folders)),
+        savePrompt(promptData) {
+            const prompts = this.getPrompts();
+            prompts.push({ id: Date.now().toString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), folderId: null, versions: [], ...promptData });
+            this.savePrompts(prompts);
+        },
+        // ... (les autres fonctions de storage sont appelées par les handlers)
+    };
+
+    // =================================================================================
+    // MODULE UI (Toutes les manipulations du DOM)
+    // =================================================================================
+    const ui = {
+        // ... (toutes les fonctions UI pour mettre à jour l'affichage)
+        updatePromptCount: () => { document.getElementById('prompt-count').textContent = `${storage.getPrompts().length} prompt(s) sauvegardé(s)`; },
+        switchTab: (tabName) => {
+            document.querySelectorAll('.main-content > div[id$="-section"]').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`${tabName}-section`)?.classList.remove('hidden');
+            document.querySelectorAll('.sidebar .nav-item').forEach(item => item.classList.toggle('active', item.dataset.tab === tabName));
+            if (tabName === 'library') { ui.renderFolders(); ui.renderPromptLibrary(); }
+            if (tabName === 'freeform') { ui.resetFreeformForm(); }
+        },
+        updateStepDisplay: () => {
+            document.querySelectorAll('#creator-section .step-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`step-${state.currentStep}`)?.classList.remove('hidden');
+            document.getElementById('step-title').textContent = WIZARD_STEPS[state.currentStep].title;
+            document.querySelectorAll('.steps-indicator .step').forEach((el, idx) => {
+                el.classList.remove('active', 'completed');
+                if (idx === state.currentStep) el.classList.add('active'); else if (idx < state.currentStep) el.classList.add('completed');
+            });
+            document.getElementById('prev-btn').classList.toggle('hidden', state.currentStep === 0);
+            document.getElementById('next-btn').textContent = (state.currentStep === WIZARD_STEPS.length - 1) ? 'Créer le Prompt' : 'Suivant';
+        },
+        resetWizardForm: () => {
+            state.currentStep = 0; state.formData = {};
+            ['role', 'objective', 'context', 'structure', 'examples', 'constraints', 'category', 'role-suggestions'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            ui.updateStepDisplay();
+        },
+        // ... (les autres fonctions UI comme renderFolders, renderPromptLibrary, etc.)
+    };
+
+    // =================================================================================
+    // GESTIONNAIRES D'ÉVÉNEMENTS (HANDLERS)
+    // =================================================================================
+    function getPromptPreview() {
+        return [state.formData.role, state.formData.objective, state.formData.context, state.formData.structure, state.formData.examples, state.formData.constraints].filter(Boolean).join('\n\n');
     }
 
-    logToScreen('DOM prêt. Démarrage du script...', 'success');
-
     // =================================================================================
-    // INITIALISATION - Étape par étape, avec des vérifications
+    // INITIALISATION - Le Cœur de l'Application
     // =================================================================================
-    try {
-        // --- Étape 1 : Vérifier les éléments de navigation ---
-        const sidebarNav = document.querySelector('.sidebar nav');
-        const mainContent = document.querySelector('.main-content');
-        
-        if (!sidebarNav) {
-            logToScreen('ERREUR CRITIQUE : Barre de navigation non trouvée (.sidebar nav)', 'error');
-            return; // Arrête tout si la navigation est absente
-        }
-        if (!mainContent) {
-            logToScreen('ERREUR CRITIQUE : Conteneur principal non trouvé (.main-content)', 'error');
-            return;
-        }
-        logToScreen('Navigation principale trouvée.', 'success');
-
-        // --- Étape 2 : Définir la logique de changement d'onglet ---
-        const switchTab = (tabName) => {
-            logToScreen(`Tentative de changement vers l'onglet : ${tabName}`);
+    function init() {
+        // Attache un seul écouteur global sur toute l'application
+        document.body.addEventListener('click', (e) => {
             
-            mainContent.querySelectorAll('.main-content > div[id$="-section"]').forEach(section => {
-                section.classList.add('hidden');
-            });
-            const sectionToShow = document.getElementById(`${tabName}-section`);
-            if (sectionToShow) {
-                sectionToShow.classList.remove('hidden');
-                logToScreen(`Section "${tabName}" affichée.`, 'success');
-            } else {
-                logToScreen(`Section "${tabName}" NON TROUVÉE !`, 'error');
+            // --- GESTIONNAIRE DE NAVIGATION ---
+            const navButton = e.target.closest('.nav-item');
+            if (navButton) {
+                ui.switchTab(navButton.dataset.tab);
+                return;
             }
 
-            sidebarNav.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.tab === tabName);
-            });
-        };
+            // --- GESTIONNAIRE DE L'ASSISTANT ---
+            if (e.target.closest('#next-btn')) {
+                if (state.currentStep < WIZARD_STEPS.length - 1) {
+                    state.currentStep++;
+                    ui.updateStepDisplay();
+                } else {
+                    storage.savePrompt({ title: (state.formData.objective || 'Nouveau Prompt').substring(0, 40), content: getPromptPreview(), category: state.formData.category || 'général' });
+                    ui.resetWizardForm();
+                    ui.updatePromptCount();
+                    alert('Prompt créé avec succès depuis l\'assistant !');
+                }
+                return;
+            }
+            if (e.target.closest('#prev-btn')) {
+                if (state.currentStep > 0) {
+                    state.currentStep--;
+                    ui.updateStepDisplay();
+                }
+                return;
+            }
 
-        // --- Étape 3 : Attacher l'écouteur de navigation ---
-        sidebarNav.addEventListener('click', (e) => {
-            const navButton = e.target.closest('.nav-item');
-            if (navButton && navButton.dataset.tab) {
-                logToScreen(`Clic détecté sur le bouton : ${navButton.dataset.tab}`, 'info');
-                switchTab(navButton.dataset.tab);
+            // --- GESTIONNAIRE DE SAISIE LIBRE ---
+            if (e.target.closest('#save-freeform-btn')) {
+                const content = document.getElementById('freeform-prompt-content').value.trim();
+                let title = document.getElementById('freeform-prompt-title').value.trim();
+                if (!content) return alert('Le contenu ne peut pas être vide.');
+                if (!title) title = content.substring(0, 40) + '...';
+                
+                storage.savePrompt({ title, content, category: document.getElementById('freeform-prompt-category').value });
+                alert('Prompt sauvegardé !');
+                ui.switchTab('library');
+                return;
+            }
+
+            // --- GESTIONNAIRE DE LA BIBLIOTHÈQUE ---
+            if (e.target.closest('#new-folder-btn')) {
+                const name = prompt('Nom du nouveau dossier:');
+                if (name && name.trim()) {
+                    const folders = storage.getFolders();
+                    folders.push({ id: Date.now().toString(), name: name.trim() });
+                    storage.saveFolders(folders);
+                    ui.renderFolders();
+                }
+                return;
+            }
+            if (e.target.closest('#export-data-btn')) { /* ... logique d'export ... */ return; }
+            if (e.target.closest('#import-data-btn')) { document.getElementById('import-data-input').click(); return; }
+
+            // Gérer les actions sur les cartes de prompt
+            const cardAction = e.target.closest('.prompt-card [data-action]');
+            if (cardAction) {
+                const action = cardAction.dataset.action;
+                const promptId = cardAction.closest('.prompt-card').dataset.id;
+                // ... logique pour delete, edit, copy ...
             }
         });
-        logToScreen('Écouteur de navigation principal attaché.', 'success');
 
-        // --- Étape 4 : Attacher les autres écouteurs, un par un, avec vérification ---
-        
-        // Assistant
-        const creatorSection = document.getElementById('creator-section');
-        if (creatorSection) {
-            const nextBtn = document.getElementById('next-btn');
-            if(nextBtn) {
-                nextBtn.addEventListener('click', () => {
-                    logToScreen('BOUTON SUIVANT CLIQUE !', 'success');
-                    // La logique viendra plus tard, on teste juste le clic.
-                });
-                logToScreen('Écouteur pour "Suivant" attaché.', 'success');
-            } else {
-                 logToScreen('Bouton "Suivant" NON TROUVÉ !', 'error');
+        // Attache les écouteurs pour la saisie de texte
+        document.body.addEventListener('input', (e) => {
+            // --- GESTIONNAIRE DE L'ASSISTANT (SAISIE) ---
+            const wizardInput = e.target.closest('#creator-section textarea, #creator-section select');
+            if (wizardInput) {
+                if (wizardInput.id in state.formData) {
+                    state.formData[wizardInput.id] = wizardInput.value;
+                }
+                if (wizardInput.id === 'role-suggestions' && wizardInput.value) {
+                    const roleText = PREDEFINED_ROLES[wizardInput.value];
+                    document.getElementById('role').value = roleText;
+                    state.formData.role = roleText;
+                }
+                // La logique d'analyse peut être ajoutée ici
             }
-        } else {
-            logToScreen('Section "creator" NON TROUVÉE !', 'error');
-        }
-
-        // Saisie Libre
-        const saveFreeformBtn = document.getElementById('save-freeform-btn');
-        if (saveFreeformBtn) {
-            saveFreeformBtn.addEventListener('click', () => {
-                 logToScreen('BOUTON SAUVEGARDER (SAISIE LIBRE) CLIQUE !', 'success');
-            });
-            logToScreen('Écouteur pour "Sauvegarder Saisie Libre" attaché.', 'success');
-        } else {
-            logToScreen('Bouton "Sauvegarder Saisie Libre" NON TROUVÉ !', 'error');
-        }
+        });
         
-        // Bibliothèque
-        const newFolderBtn = document.getElementById('new-folder-btn');
-        if (newFolderBtn) {
-            newFolderBtn.addEventListener('click', () => {
-                logToScreen('BOUTON NOUVEAU DOSSIER CLIQUE !', 'success');
-            });
-             logToScreen('Écouteur pour "Nouveau Dossier" attaché.', 'success');
-        } else {
-            logToScreen('Bouton "Nouveau Dossier" NON TROUVÉ !', 'error');
-        }
-
-
-        // --- Étape finale : Initialiser la vue ---
-        switchTab('creator');
-        logToScreen('Application initialisée et prête.', 'success');
-
-    } catch (error) {
-        logToScreen(`ERREUR FATALE PENDANT L'INITIALISATION : ${error.message}`, 'error');
-        console.error(error);
+        // Initialiser la vue
+        ui.switchTab('creator');
+        ui.updatePromptCount();
     }
+
+    init();
 });
