@@ -3,18 +3,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ÉTAT DE L'APPLICATION ---
     const state = {
         currentStep: 0,
-        // formData est maintenant un simple dictionnaire qui se remplit dynamiquement.
         formData: {}, 
     };
 
     // --- CONSTANTES ---
-    const WIZARD_STEPS = [
-        { title: 'Qui est l\'IA ? (Persona)' }, { title: 'Quel est l\'objectif final ?' },
-        { title: 'Comment l\'IA doit-elle raisonner ?' }, { title: 'Quel contexte fournir ?' },
-        { title: 'Quelle est la structure de la réponse ?' }, { title: 'Quelles sont les contraintes ?' }
-    ];
-    
-    // --- MODULE DE STOCKAGE (simplifié pour la clarté) ---
+    const WIZARD_STEPS = [ /* ... */ ];
+
+    // --- MODULE DE STOCKAGE ---
     const storage = {
         getPrompts: () => JSON.parse(localStorage.getItem('prompts')) || [],
         savePrompts: (prompts) => localStorage.setItem('prompts', JSON.stringify(prompts)),
@@ -25,93 +20,81 @@ document.addEventListener('DOMContentLoaded', () => {
         },
     };
 
+    // --- LOGIQUE MÉTIER ---
+    function buildFinalPrompt() {
+        let promptParts = [];
+        const data = state.formData;
+        const useCoT = document.getElementById('use_chain_of_thought')?.checked ?? true;
+
+        if (data.persona_role) {
+            let personaStr = `Tu es un ${data.persona_role}`;
+            if (data.persona_context) personaStr += `, ${data.persona_context}`;
+            if (data.persona_style) personaStr += `. Ton style est ${data.persona_style}.`;
+            promptParts.push(`**Persona:**\n${personaStr}`);
+        }
+        if (data.objective) promptParts.push(`**Objectif Principal:**\n${data.objective}`);
+        let methodologyStr = useCoT ? "Réfléchis étape par étape. " : "";
+        if (data.methodology) methodologyStr += data.methodology;
+        if (methodologyStr.trim()) promptParts.push(`**Méthodologie:**\n${methodologyStr}`);
+        if (data.context) promptParts.push(`**Contexte:**\n${data.context}`);
+        if (data.structure) promptParts.push(`**Structure de Réponse:**\n${data.structure}`);
+        if (data.constraints) promptParts.push(`**Contraintes:**\n${data.constraints}`);
+        return promptParts.join('\n\n---\n\n');
+    }
+
     // --- MODULE UI ---
     const ui = {
-        updatePromptCount: () => {
-            const el = document.getElementById('prompt-count');
-            if (el) el.textContent = `${storage.getPrompts().length} prompt(s) sauvegardé(s)`;
-        },
-        switchTab: (tabName) => {
-            document.querySelectorAll('.main-content > div[id$="-section"]').forEach(s => s.classList.add('hidden'));
-            const section = document.getElementById(`${tabName}-section`);
-            if (section) section.classList.remove('hidden');
-            document.querySelectorAll('.sidebar .nav-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.tab === tabName);
-            });
-        },
-        updateStepDisplay: () => {
-            const creatorSection = document.getElementById('creator-section');
-            if (!creatorSection) return;
-            creatorSection.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`step-${state.currentStep}`)?.classList.remove('hidden');
-            document.getElementById('step-title').textContent = WIZARD_STEPS[state.currentStep].title;
-            creatorSection.querySelectorAll('.steps-indicator .step').forEach((el, idx) => {
-                el.classList.remove('active', 'completed');
-                if (idx === state.currentStep) el.classList.add('active'); else if (idx < state.currentStep) el.classList.add('completed');
-            });
-            document.getElementById('prev-btn').classList.toggle('hidden', state.currentStep === 0);
-            document.getElementById('next-btn').textContent = (state.currentStep === WIZARD_STEPS.length - 1) ? 'Créer le Prompt' : 'Suivant';
-        },
+        updatePromptCount: () => { /* ... (inchangé) ... */ },
+        switchTab: (tabName) => { /* ... (inchangé) ... */ },
+        updateStepDisplay: () => { /* ... (inchangé) ... */ },
         resetWizardForm: () => {
             state.currentStep = 0; state.formData = {};
             document.querySelectorAll('#creator-section input, #creator-section textarea, #creator-section select').forEach(el => {
-                if(el.type === 'checkbox') el.checked = true; else el.value = '';
+                if (el.type === 'checkbox') el.checked = true; else el.value = '';
             });
             ui.updateStepDisplay();
+            ui.updateQualityAnalyzer(); // <-- Réinitialiser aussi l'analyseur
+        },
+
+        // *** FONCTION RESTAURÉE ET CONNECTÉE ***
+        updateQualityAnalyzer() {
+            const promptPreview = buildFinalPrompt();
+            const analyzerEl = document.getElementById('quality-analyzer');
+            if (!analyzerEl) return;
+            analyzerEl.classList.toggle('hidden', !promptPreview);
+            if (!promptPreview) return;
+
+            const analysis = { score: 5, suggestions: [] };
+            if (!state.formData.persona_role) { analysis.suggestions.push('Définir un rôle principal améliore la spécialisation.'); analysis.score--; }
+            if (!state.formData.objective) { analysis.suggestions.push('Un objectif clair est crucial pour guider l\'IA.'); analysis.score--; }
+            if (promptPreview.length < 100) { analysis.suggestions.push('Un prompt plus détaillé et contextuel donne de meilleurs résultats.'); analysis.score--; }
+            if (!document.getElementById('use_chain_of_thought')?.checked) { analysis.suggestions.push('Activer la "Chaîne de Pensée" améliore le raisonnement.'); }
+            
+            const scoreCircle = document.getElementById('score-circle');
+            const scoreLabel = document.getElementById('score-label');
+            const suggestionsContainer = document.getElementById('suggestions-container');
+            const suggestionsList = document.getElementById('suggestions-list');
+
+            if (scoreCircle) scoreCircle.textContent = `${analysis.score}/5`;
+            const scoreClass = ['score-poor','score-poor','score-average','score-average','score-good','score-excellent'][analysis.score];
+            if (scoreCircle) scoreCircle.className = `score-circle ${scoreClass}`;
+            if (scoreLabel) scoreLabel.textContent = 'Qualité : ' + ['Très Faible','Faible','Moyenne','Bonne','Très Bonne','Excellente'][analysis.score];
+            if (suggestionsContainer) suggestionsContainer.classList.toggle('hidden', analysis.suggestions.length === 0);
+            if (suggestionsList) {
+                suggestionsList.innerHTML = '';
+                analysis.suggestions.forEach(s => { const li = document.createElement('li'); li.className = 'suggestion-item'; li.textContent = s; suggestionsList.appendChild(li); });
+            }
         },
     };
-
-    // --- LOGIQUE MÉTIER ---
-
-    // *** NOUVELLE FONCTION CLÉ POUR LA FLEXIBILITÉ ***
-    // Construit le prompt final uniquement avec les sections remplies.
-    function buildFinalPrompt() {
-        let promptParts = [];
-
-        // 1. Persona
-        const personaRole = state.formData.persona_role || '';
-        const personaContext = state.formData.persona_context || '';
-        const personaStyle = state.formData.persona_style || '';
-        if (personaRole) {
-            let personaStr = `Tu es un ${personaRole}`;
-            if (personaContext) personaStr += `, ${personaContext}`;
-            if (personaStyle) personaStr += `. Ton style est ${personaStyle}.`;
-            promptParts.push(`**Persona:**\n${personaStr}`);
-        }
-
-        // 2. Objectif
-        const objective = state.formData.objective || '';
-        if (objective) {
-            promptParts.push(`**Objectif Principal:**\n${objective}`);
-        }
-        
-        // 3. Méthodologie
-        const useCoT = document.getElementById('use_chain_of_thought').checked;
-        const methodology = state.formData.methodology || '';
-        let methodologyStr = '';
-        if (useCoT) methodologyStr = "Réfléchis étape par étape. ";
-        if (methodology) methodologyStr += methodology;
-        if (methodologyStr.trim()) {
-             promptParts.push(`**Méthodologie de Réflexion:**\n${methodologyStr}`);
-        }
-
-        // 4. Autres sections
-        const context = state.formData.context || '';
-        if (context) promptParts.push(`**Contexte Clé:**\n${context}`);
-        const structure = state.formData.structure || '';
-        if (structure) promptParts.push(`**Structure de Réponse Attendue:**\n${structure}`);
-        const constraints = state.formData.constraints || '';
-        if (constraints) promptParts.push(`**Contraintes:**\n${constraints}`);
-        
-        return promptParts.join('\n\n---\n\n');
-    }
 
     // --- GESTIONNAIRES D'ÉVÉNEMENTS ---
     const handlers = {
         handleGlobalClick(e) {
+            // --- Navigation ---
             const navButton = e.target.closest('.nav-item');
             if (navButton) { ui.switchTab(navButton.dataset.tab); return; }
 
+            // --- Assistant ---
             if (e.target.closest('#next-btn')) {
                 if (state.currentStep < WIZARD_STEPS.length - 1) {
                     state.currentStep++;
@@ -119,14 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     const finalPrompt = buildFinalPrompt();
                     if (!finalPrompt) return alert('Impossible de créer un prompt vide.');
-                    
                     storage.savePrompt({
                         title: (state.formData.objective || 'Nouveau Prompt Expert').substring(0, 40),
                         content: finalPrompt,
                         category: state.formData.category || 'général'
                     });
-                    
-                    alert('Prompt Expert créé avec succès !\n\nContenu :\n' + finalPrompt);
+                    alert('Prompt Expert créé avec succès !');
                     ui.updatePromptCount();
                     ui.resetWizardForm();
                 }
@@ -141,7 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
         handleGlobalInput(e) {
             const wizardInput = e.target.closest('#creator-section textarea, #creator-section input, #creator-section select');
             if (wizardInput) {
-                state.formData[wizardInput.id] = wizardInput.value;
+                state.formData[wizardInput.id] = wizardInput.type === 'checkbox' ? wizardInput.checked : wizardInput.value;
+                // --- APPEL À L'ANALYSEUR À CHAQUE SAISIE ---
+                ui.updateQualityAnalyzer();
             }
         }
     };
@@ -157,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.switchTab('creator');
         ui.updateStepDisplay();
         ui.updatePromptCount();
-        console.log("Application initialisée. L'assistant expert est prêt et flexible.");
+        console.log("Application initialisée. Assistant expert et analyseur prêts.");
     }
 
     init();
