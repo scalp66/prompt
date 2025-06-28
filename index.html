@@ -3,71 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDE de Prompts IA</title>
+    <title>Test de Débogage</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Style simple pour notre bouton de test */
+        #test-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+        #mon-bouton-test {
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background-color: #e53e3e; /* Rouge vif */
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <div class="app">
-        <aside class="sidebar">
-            <h2>IDE de Prompts</h2>
-            <nav>
-                <button class="nav-item active" data-tab="creator"><span class="nav-icon">🚀</span> Assistant</button>
-                <button class="nav-item" data-tab="freeform"><span class="nav-icon">📝</span> Saisie Libre</button>
-                <button class="nav-item" data-tab="library"><span class="nav-icon">📚</span> Bibliothèque</button>
-                <button class="nav-item" data-tab="playground"><span class="nav-icon">🧪</span> Playground</button>
-                <button class="nav-item" data-tab="settings"><span class="nav-icon">⚙️</span> Paramètres</button>
-            </nav>
-            <div class="stats-box">
-                <h4>📊 Vos prompts</h4>
-                <p id="prompt-count">0 prompt sauvegardé</p>
-            </div>
-        </aside>
-
-        <main class="main-content">
-            <div id="creator-section">
-                <div class="page-header"><h1 class="page-title">Assistant de Création de Prompts</h1><p class="page-subtitle">Créez des prompts efficaces étape par étape</p></div>
-                <div class="wizard-container">
-                    <div class="steps-indicator"><div class="step active" data-step="0"><div class="step-number">1</div><div class="step-label">Rôle</div></div><div class="step" data-step="1"><div class="step-number">2</div><div class="step-label">Objectif</div></div><div class="step" data-step="2"><div class="step-number">3</div><div class="step-label">Contexte</div></div><div class="step" data-step="3"><div class="step-number">4</div><div class="step-label">Structure</div></div><div class="step" data-step="4"><div class="step-number">5</div><div class="step-label">Exemples</div></div><div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Contraintes</div></div></div>
-                    <h3 id="step-title">Quel rôle doit jouer l'IA ?</h3>
-                    <div id="step-0" class="step-content"><div class="form-group"><label for="role" class="form-label">Quel rôle doit jouer l'IA ?</label><textarea id="role" class="form-textarea" placeholder="Ex: Tu es un expert développeur Python..."></textarea></div><div class="form-group"><label for="role-suggestions" class="form-label">Rôles suggérés</label><select id="role-suggestions" class="form-select"><option value="">Choisir un rôle prédéfini (optionnel)</option><option value="expert-dev">Expert développeur</option><option value="consultant">Consultant en stratégie</option><option value="professeur">Professeur pédagogue</option><option value="redacteur">Rédacteur professionnel</option></select></div></div>
-                    <div id="step-1" class="step-content hidden"><div class="form-group"><label for="objective" class="form-label">Que voulez-vous que l'IA fasse ?</label><textarea id="objective" class="form-textarea" placeholder="Ex: Crée une fonction Python..."></textarea></div><div class="form-group"><label for="category" class="form-label">Catégorie</label><select id="category" class="form-select"><option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option></select></div></div>
-                    <div id="step-2" class="step-content hidden"><div class="form-group"><label for="context" class="form-label">Décrivez le contexte</label><textarea id="context" class="form-textarea" placeholder="Ex: Je travaille sur un projet..."></textarea></div></div>
-                    <div id="step-3" class="step-content hidden"><div class="form-group"><label for="structure" class="form-label">Structure de la réponse</label><textarea id="structure" class="form-textarea" placeholder="Ex: Code commenté, puis explication..."></textarea></div></div>
-                    <div id="step-4" class="step-content hidden"><div class="form-group"><label for="examples" class="form-label">Exemples (Optionnel)</label><textarea id="examples" class="form-textarea" placeholder="Ex: factorielle(5) -> 120..."></textarea></div></div>
-                    <div id="step-5" class="step-content hidden"><div class="form-group"><label for="constraints" class="form-label">Contraintes (Optionnel)</label><textarea id="constraints" class="form-textarea" placeholder="Ex: Utiliser uniquement les bibliothèques standard..."></textarea></div></div>
-                    <div id="quality-analyzer" class="quality-analyzer hidden"><div class="quality-score"><div id="score-circle" class="score-circle score-poor">0/5</div><div><h4 id="score-label">Qualité : À améliorer</h4><p>Votre prompt est analysé en temps réel</p></div></div><div id="suggestions-container" class="hidden"><h5>Suggestions d'amélioration :</h5><ul id="suggestions-list" class="suggestions-list"></ul></div></div>
-                    <div class="button-group"><button id="prev-btn" class="btn btn-secondary hidden">Précédent</button><button id="next-btn" class="btn btn-primary">Suivant</button></div>
-                </div>
-            </div>
-            <div id="freeform-section" class="hidden">
-                 <div class="page-header"><h1 class="page-title">Saisie Libre de Prompt</h1><p class="page-subtitle">Collez ou écrivez votre prompt et sauvegardez-le</p></div>
-                 <div class="wizard-container"><div class="form-group"><label for="freeform-prompt-content" class="form-label">Votre Prompt :</label><textarea id="freeform-prompt-content" class="form-textarea" rows="15" placeholder="Collez ou écrivez votre prompt ici..."></textarea></div><div class="form-group"><label for="freeform-prompt-title" class="form-label">Titre du Prompt (optionnel) :</label><input type="text" id="freeform-prompt-title" class="form-input" placeholder="Un titre pour votre prompt..."></div><div class="form-group"><label for="freeform-prompt-category" class="form-label">Catégorie (optionnel) :</label><select id="freeform-prompt-category" class="form-select"><option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option></select></div><div class="button-group"><button id="save-freeform-btn" class="btn btn-primary">Sauvegarder le Prompt</button></div></div>
-            </div>
-            <div id="library-section" class="hidden">
-                <div class="page-header"><h1 class="page-title">Mes Prompts Sauvegardés</h1><p class="page-subtitle">Gérez, recherchez et réutilisez vos prompts</p></div>
-                <div class="wizard-container library-container">
-                    <div class="folder-sidebar">
-                        <h3>Dossiers</h3><ul id="folder-list" class="folder-list"></ul><button id="new-folder-btn" class="btn btn-secondary" style="width: 100%; margin-top: 16px;">+ Nouveau Dossier</button>
-                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;"><button id="export-data-btn" class="btn btn-secondary btn-sm" style="width: 100%; margin-bottom: 10px;">Exporter les données</button><input type="file" id="import-data-input" accept=".json" style="display: none;"><button id="import-data-btn" class="btn btn-secondary btn-sm" style="width: 100%;">Importer les données</button></div>
-                    </div>
-                    <div class="prompt-list-container">
-                        <div class="library-controls"><label for="search-input" class="sr-only">Rechercher</label><input type="text" id="search-input" class="form-input" placeholder="Rechercher un prompt..." style="flex-grow: 1;"><label for="sort-select" class="sr-only">Trier par</label><select id="sort-select" class="form-select sort-select-width"><option value="newest">Plus récents d'abord</option><option value="oldest">Plus anciens d'abord</option><option value="title-asc">Titre (A-Z)</option><option value="title-desc">Titre (Z-A)</option></select></div>
-                        <div id="prompt-library-list"></div>
-                    </div>
-                </div>
-            </div>
-            <div id="playground-section" class="hidden">
-                <div class="page-header"><h1 class="page-title">Playground A/B Test</h1><p class="page-subtitle">Testez et comparez différentes versions de vos prompts.</p></div>
-                <div class="wizard-container"><p>Bientôt disponible : une interface pour tester vos prompts côte à côte !</p></div>
-            </div>
-            <div id="settings-section" class="hidden">
-                <div class="page-header"><h1 class="page-title">Paramètres</h1><p class="page-subtitle">Gérez vos préférences et clés API.</p></div>
-                <div class="wizard-container"><form onsubmit="return false;"><p style="margin-bottom: 20px;">Votre clé API est stockée de manière sécurisée dans votre navigateur et n'est jamais partagée.</p><div class="form-group"><label for="api-key-input" class="form-label">Votre Clé API (ex: OpenAI)</label><input type="password" id="api-key-input" class="form-input" placeholder="sk-..."></div><div class="button-group"><button id="save-api-key-btn" class="btn btn-primary">Sauvegarder la Clé</button></div></form></div>
-            </div>
-        </main>
+    <div id="test-container">
+        <button id="mon-bouton-test">CLIQUEZ-MOI</button>
     </div>
-    <div id="prompt-modal" class="modal-overlay hidden"><div class="modal-content"><div class="modal-header"><h3 id="modal-title" class="modal-title">Titre du Prompt</h3><button id="modal-close-btn" class="modal-close-btn">×</button></div><div id="modal-body" class="modal-body"></div></div></div>
-    <div id="toast-container"></div>
     <script src="js/app.js" defer></script>
 </body>
 </html>
