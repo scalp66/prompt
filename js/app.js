@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // =================================================================================
+    // ÉTAT GLOBAL DE L'APPLICATION
+    // =================================================================================
     const state = {
         currentStep: 0,
         formData: { persona_role: '', persona_context: '', persona_style: '', objective: '', category: 'général', methodology: '', use_chain_of_thought: true, context: '', structure: '', constraints: '' },
@@ -7,8 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
         editingPromptId: null,
     };
 
-    const WIZARD_STEPS = [ { title: 'Qui est l\'IA ? (Persona)' }, { title: 'Quel est l\'objectif final ?' }, { title: 'Comment l\'IA doit-elle raisonner ?' }, { title: 'Quel contexte fournir ?' }, { title: 'Quelle est la structure de la réponse ?' }, { title: 'Quelles sont les contraintes ?' } ];
+    // =================================================================================
+    // CONSTANTES ET CONFIGURATION
+    // =================================================================================
+    const WIZARD_STEPS = [
+        { title: 'Qui est l\'IA ? (Persona)' }, { title: 'Quel est l\'objectif final ?' },
+        { title: 'Comment l\'IA doit-elle raisonner ?' }, { title: 'Quel contexte fournir ?' },
+        { title: 'Quelle est la structure de la réponse ?' }, { title: 'Quelles sont les contraintes ?' }
+    ];
     
+    // =================================================================================
+    // MODULE DE STOCKAGE (localStorage)
+    // =================================================================================
     const storage = {
         get: (key) => JSON.parse(localStorage.getItem(key)) || [],
         set: (key, value) => localStorage.setItem(key, JSON.stringify(value)),
@@ -18,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
         saveFolders: (f) => storage.set('prompt_folders', f),
     };
 
+    // =================================================================================
+    // MODULE DE LOGIQUE MÉTIER
+    // =================================================================================
     const logic = {
         saveNewPrompt: (d) => { const all = storage.getPrompts(); all.push({ id: Date.now().toString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), ...d }); storage.savePrompts(all); },
         updatePrompt: (id, d) => { let all = storage.getPrompts(); const i = all.findIndex(p => p.id === id); if (i > -1) all[i] = { ...all[i], ...d, updatedAt: new Date().toISOString() }; storage.savePrompts(all); },
@@ -35,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // =================================================================================
+    // MODULE UI (Manipulation du DOM)
+    // =================================================================================
     const ui = {
         showToast: (m, t='info') => { const c=document.getElementById('toast-container'); if(!c)return; const e=document.createElement('div'); e.className=`toast ${t}`; e.innerHTML=`<span class="toast-icon">${t==='success'?'✔️':'ℹ️'}</span> ${m}`; c.appendChild(e); setTimeout(()=>e.classList.add('show'),10); setTimeout(()=>{e.classList.remove('show');e.addEventListener('transitionend',()=>e.remove());},3000); },
         updatePromptCount: () => { const el = document.getElementById('prompt-count'); if (el) el.textContent = `${storage.getPrompts().length} prompt(s)`; },
@@ -43,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetWizardForm: () => { state.currentStep=0; state.formData={}; document.querySelectorAll('#creator-section input:not([type=checkbox]),#creator-section textarea,#creator-section select').forEach(e=>e.value=''); const c=document.getElementById('use_chain_of_thought');if(c)c.checked=true; ui.updateStepDisplay(); ui.updateQualityAnalyzer(); },
         resetFreeformForm: () => { state.editingPromptId=null; document.getElementById('freeform-prompt-title').value=''; document.getElementById('freeform-prompt-content').value=''; document.getElementById('freeform-prompt-category').value='général'; document.getElementById('save-freeform-btn').textContent='Sauvegarder'; },
         renderFolders: () => { const l=document.getElementById('folder-list'); if(!l)return; l.innerHTML=`<li class="folder-item ${state.currentFolderId==='all'?'active':''}" data-id="all">Tous</li><li class="folder-item ${state.currentFolderId==='uncategorized'?'active':''}" data-id="uncategorized">Non classés</li>`; storage.getFolders().forEach(f=>{l.innerHTML+=`<li class="folder-item ${state.currentFolderId===f.id?'active':''}" data-id="${f.id}"><span>${f.name}</span><button class="delete-folder-btn" data-id="${f.id}">×</button></li>`;}); },
-        renderPromptLibrary: () => { const c=document.getElementById('prompt-library-list'); if(!c)return; let p=storage.getPrompts(); if(state.currentFolderId==='uncategorized')p=p.filter(p=>!p.folderId); else if(state.currentFolderId!=='all')p=p.filter(p=>p.folderId===state.currentFolderId); const sT=document.getElementById('search-input')?.value.toLowerCase()||''; if(sT)p=p.filter(pr=>(pr.title+pr.content).toLowerCase().includes(sT)); p.sort((a,b)=>{const sV=document.getElementById('sort-select')?.value||'newest'; switch(sV){case'oldest':return new Date(a.createdAt)-new Date(b.createdAt);default:return new Date(b.createdAt)-new Date(a.createdAt);}}); c.innerHTML=p.length===0?'<p style="text-align:center;padding:40px 0;">Aucun prompt.</p>':''; p.forEach(pr=>{const card=document.createElement('div');card.className='prompt-card';card.dataset.id=pr.id;const fO=storage.getFolders().map(f=>`<option value="${f.id}" ${pr.folderId===f.id?'selected':''}>${f.name}</option>`).join('');const sH=`<select class="form-select btn-sm" data-action="move"><option value="null" ${!pr.folderId?'selected':''}>Non classé</option>${fO}</select>`;card.innerHTML=`<div class="prompt-card-header"><h4 class="prompt-card-title">${pr.title}</h4><span class="prompt-card-category">${pr.category}</span></div><p class="prompt-card-content">${pr.content}</p><div class="prompt-card-footer"><small>Créé: ${new Date(pr.createdAt).toLocaleDateString('fr-FR')}</small><div class="prompt-card-actions">${sH}<button class="btn btn-sm" data-action="edit">Modifier</button><button class="btn btn-sm" data-action="copy">Copier</button><button class="btn btn-sm" data-action="delete">Suppr.</button></div></div>`;c.appendChild(card);}); },
+        renderPromptLibrary: () => { const c=document.getElementById('prompt-library-list'); if(!c)return; let p=storage.getPrompts(); if(state.currentFolderId==='uncategorized')p=p.filter(p=>!p.folderId); else if(state.currentFolderId!=='all')p=p.filter(p=>p.folderId===state.currentFolderId); const sT=document.getElementById('search-input')?.value.toLowerCase()||''; if(sT)p=p.filter(pr=>(pr.title+pr.content).toLowerCase().includes(sT)); const sV=document.getElementById('sort-select')?.value||'newest'; p.sort((a,b)=>{switch(sV){case'oldest':return new Date(a.createdAt)-new Date(b.createdAt);default:return new Date(b.createdAt)-new Date(a.createdAt);}}); c.innerHTML=p.length===0?'<p style="text-align:center;padding:40px 0;">Aucun prompt.</p>':''; p.forEach(pr=>{const card=document.createElement('div');card.className='prompt-card';card.dataset.id=pr.id;const fO=storage.getFolders().map(f=>`<option value="${f.id}" ${pr.folderId===f.id?'selected':''}>${f.name}</option>`).join('');const sH=`<select class="form-select btn-sm" data-action="move"><option value="null" ${!pr.folderId?'selected':''}>Non classé</option>${fO}</select>`;card.innerHTML=`<div class="prompt-card-header"><h4 class="prompt-card-title">${pr.title}</h4><span class="prompt-card-category">${pr.category}</span></div><p class="prompt-card-content">${pr.content}</p><div class="prompt-card-footer"><small>Créé: ${new Date(pr.createdAt).toLocaleDateString('fr-FR')}</small><div class="prompt-card-actions">${sH}<button class="btn btn-sm" data-action="edit">Modifier</button><button class="btn btn-sm" data-action="copy">Copier</button><button class="btn btn-sm" data-action="delete">Suppr.</button></div></div>`;c.appendChild(card);}); },
         updateQualityAnalyzer: () => {
             const analyzerEl = document.getElementById('quality-analyzer'); if (!analyzerEl) return;
             let score = 0; const suggestions = []; const data = state.formData;
@@ -87,12 +106,14 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (target.closest('.folder-item')) { state.currentFolderId = target.closest('.folder-item').dataset.id; ui.renderFolders(); ui.renderPromptLibrary(); }
             else if (target.closest('#export-data-btn')) { const d={prompts:storage.getPrompts(),folders:storage.getFolders()}; const s=JSON.stringify(d,null,2); const b=new Blob([s],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`prompt_export.json`; a.click(); URL.revokeObjectURL(a.href); }
             const card = e.target.closest('.prompt-card');
-            if (card) {
-                const cardAction = e.target.closest('[data-action]');
-                if (cardAction) { const a=cardAction.dataset.action, id=card.dataset.id; if(a==='delete'){if(confirm('Supprimer?')){logic.deletePrompt(id);ui.renderPromptLibrary();}}else if(a==='edit'){ state.editingPromptId=id; const p=storage.getPrompts().find(p=>p.id===id); ui.switchTab('freeform'); document.getElementById('freeform-prompt-title').value=p.title; document.getElementById('freeform-prompt-content').value=p.content; document.getElementById('freeform-prompt-category').value=p.category; document.getElementById('save-freeform-btn').textContent='Mettre à jour';}else if(a==='copy'){const p=storage.getPrompts().find(p=>p.id===id);if(p)navigator.clipboard.writeText(p.content).then(()=>ui.showToast('Copié!','success'));}}
-                else { ui.openPromptModal(card.dataset.id); }
+            if (card && !e.target.closest('[data-action]')) return ui.openPromptModal(card.dataset.id);
+            const cardAction = target.closest('.prompt-card [data-action]');
+            if (cardAction) { const a=cardAction.dataset.action, id=cardAction.closest('.prompt-card').dataset.id;
+                if (a==='delete'){if(confirm('Supprimer?')){logic.deletePrompt(id);ui.renderPromptLibrary();}}
+                else if (a==='copy'){const p=storage.getPrompts().find(p=>p.id===id);if(p)navigator.clipboard.writeText(p.content).then(()=>ui.showToast('Copié!','success'));}
+                else if (a==='edit'){ state.editingPromptId=id; const p=storage.getPrompts().find(p=>p.id===id); ui.switchTab('freeform'); document.getElementById('freeform-prompt-title').value=p.title; document.getElementById('freeform-prompt-content').value=p.content; document.getElementById('freeform-prompt-category').value=p.category; document.getElementById('save-freeform-btn').textContent='Mettre à jour';}
             }
-            if (e.target.closest('#prompt-modal') && e.target.id === 'prompt-modal' || e.target.closest('#modal-close-btn')) { ui.closePromptModal(); }
+            if (e.target.closest('#modal-close-btn') || e.target.id === 'prompt-modal') { ui.closePromptModal(); }
         },
         globalInputHandler(e) {
             const target = e.target;
