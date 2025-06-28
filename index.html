@@ -3,20 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test de Débogage Final</title>
-    <style>
-        #test-container { display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; }
-        #mon-bouton-test { padding: 20px 40px; font-size: 24px; font-weight: bold; color: white; background-color: #48bb78; border: none; border-radius: 10px; cursor: pointer; }
-    </style>
+    <title>IDE de Prompts IA</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <div class="app">
+        <aside class="sidebar">
+            <h2>IDE de Prompts</h2>
+            <nav>
+                <button class="nav-item active" data-tab="creator"><span class="nav-icon">🚀</span> Assistant</button>
+                <button class="nav-item" data-tab="freeform"><span class="nav-icon">📝</span> Saisie Libre</button>
+                <button class="nav-item" data-tab="library"><span class="nav-icon">📚</span> Bibliothèque</button>
+                <button class="nav-item" data-tab="playground"><span class="nav-icon">🧪</span> Playground</button>
+                <button class="nav-item" data-tab="settings"><span class="nav-icon">⚙️</span> Paramètres</button>
+            </nav>
+            <div class="stats-box">
+                <h4>📊 Vos prompts</h4>
+                <p id="prompt-count">0 prompt sauvegardé</p>
+            </div>
+        </aside>
 
-    <div id="test-container">
-        <button id="mon-bouton-test">CLIQUEZ-MOI POUR CONFIRMER</button>
+        <main class="main-content">
+            <div id="creator-section"><h1>Assistant</h1><p>Contenu à venir...</p></div>
+            <div id="freeform-section" class="hidden"><h1>Saisie Libre</h1><p>Contenu à venir...</p></div>
+            <div id="library-section" class="hidden"><h1>Bibliothèque</h1><p>Contenu à venir...</p></div>
+            <div id="playground-section" class="hidden"><h1>Playground</h1><p>Contenu à venir...</p></div>
+            <div id="settings-section" class="hidden"><h1>Paramètres</h1><p>Contenu à venir...</p></div>
+        </main>
     </div>
 
-    <!-- Le script est maintenant ici, à la toute fin du body, SANS defer -->
+    <!-- Le script est à la fin, sans defer -->
     <script src="js/app.js"></script>
-
 </body>
 </html>
