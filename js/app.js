@@ -106,13 +106,15 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (target.closest('.delete-folder-btn')) { const id=target.dataset.id; if(confirm('Supprimer dossier?')){logic.deleteFolder(id);state.currentFolderId='all';ui.renderFolders();ui.renderPromptLibrary();} }
             else if (target.closest('.folder-item')) { state.currentFolderId = target.closest('.folder-item').dataset.id; ui.renderFolders(); ui.renderPromptLibrary(); }
             else if (target.closest('#export-data-btn')) { const d={prompts:storage.getPrompts(),folders:storage.getFolders()}; const s=JSON.stringify(d,null,2); const b=new Blob([s],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`prompt_export.json`; a.click(); URL.revokeObjectURL(a.href); }
-            const card = target.closest('.prompt-card'); if (card && !target.closest('[data-action]')) return ui.openPromptModal(card.dataset.id);
             const cardAction = target.closest('.prompt-card [data-action]');
             if (cardAction) { const a=cardAction.dataset.action, id=cardAction.closest('.prompt-card').dataset.id;
                 if (a==='delete'){if(confirm('Supprimer?')){logic.deletePrompt(id);ui.renderPromptLibrary();}}
                 else if (a==='copy'){const p=storage.getPrompts().find(p=>p.id===id);if(p)navigator.clipboard.writeText(p.content).then(()=>ui.showToast('Copié!','success'));}
                 else if (a==='edit'){ state.editingPromptId=id; const p=storage.getPrompts().find(p=>p.id===id); ui.switchTab('freeform'); document.getElementById('freeform-prompt-title').value=p.title; document.getElementById('freeform-prompt-content').value=p.content; document.getElementById('freeform-prompt-category').value=p.category; document.getElementById('save-freeform-btn').textContent='Mettre à jour';}
+                return;
             }
+            const card = target.closest('.prompt-card');
+            if (card) { ui.openPromptModal(card.dataset.id); }
         },
         globalInputHandler(e) {
             const target = e.target;
