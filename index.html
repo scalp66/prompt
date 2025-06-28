@@ -21,20 +21,23 @@
         </aside>
         <main class="main-content">
             <div id="creator-section">
-                <!-- Contenu de l'assistant -->
+                <div class="page-header"><h1 class="page-title">Assistant de Création Expert</h1><p class="page-subtitle">Concevez des prompts de haute précision</p></div>
+                <div class="wizard-container">
+                    <div class="steps-indicator"><div class="step active" data-step="0"><div class="step-number">1</div><div class="step-label">Persona</div></div><div class="step" data-step="1"><div class="step-number">2</div><div class="step-label">Objectif</div></div><div class="step" data-step="2"><div class="step-number">3</div><div class="step-label">Méthodologie</div></div><div class="step" data-step="3"><div class="step-number">4</div><div class="step-label">Contexte</div></div><div class="step" data-step="4"><div class="step-number">5</div><div class="step-label">Structure</div></div><div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Contraintes</div></div></div>
+                    <h3 id="step-title">Qui est l'IA ? (Persona)</h3>
+                    <div id="step-0" class="step-content"><div class="form-group"><label for="persona_role" class="form-label">Rôle Principal</label><input type="text" id="persona_role" class="form-input" placeholder="Ex: Architecte Logiciel Senior"></div><div class="form-group"><label for="persona_context" class="form-label">Contexte du Rôle</label><input type="text" id="persona_context" class="form-input" placeholder="Ex: spécialisé en systèmes distribués"></div><div class="form-group"><label for="persona_style" class="form-label">Style de Communication</label><input type="text" id="persona_style" class="form-input" placeholder="Ex: pédagogique, avec des analogies"></div></div>
+                    <div id="step-1" class="step-content hidden"><div class="form-group"><label for="objective" class="form-label">Que voulez-vous que l'IA fasse ?</label><textarea id="objective" class="form-textarea" placeholder="Ex: Expliquer le concept de 'Race Condition'..."></textarea></div><div class="form-group"><label for="category" class="form-label">Catégorie</label><select id="category" class="form-select"><option value="général">Général</option><option value="code">Programmation</option><option value="rédaction">Rédaction</option><option value="analyse">Analyse</option><option value="créatif">Créatif</option></select></div></div>
+                    <div id="step-2" class="step-content hidden"><div class="form-group"><label for="methodology" class="form-label">Comment l'IA doit-elle réfléchir ?</label><textarea id="methodology" class="form-textarea" placeholder="Ex: Décompose le problème..."></textarea></div><div class="form-group" style="display: flex; align-items: center;"><input type="checkbox" id="use_chain_of_thought" style="width: auto; margin-right: 10px;" checked><label for="use_chain_of_thought">Inclure "Réfléchis étape par étape." (Recommandé)</label></div></div>
+                    <div id="step-3" class="step-content hidden"><div class="form-group"><label for="context" class="form-label">Quel contexte fournir ?</label><textarea id="context" class="form-textarea" placeholder="Ex: Je prépare une présentation pour des juniors..."></textarea></div></div>
+                    <div id="step-4" class="step-content hidden"><div class="form-group"><label for="structure" class="form-label">Structure de la réponse attendue</label><textarea id="structure" class="form-textarea" placeholder="Ex: 1. Définition. 2. Analogie. 3. Extrait de code..."></textarea></div></div>
+                    <div id="step-5" class="step-content hidden"><div class="form-group"><label for="constraints" class="form-label">Contraintes et Négations</label><textarea id="constraints" class="form-textarea" placeholder="Ex: NE PAS utiliser de jargon complexe..."></textarea></div></div>
+                    <div class="button-group"><button id="prev-btn" class="btn btn-secondary hidden">Précédent</button><button id="next-btn" class="btn btn-primary">Suivant</button></div>
+                </div>
             </div>
-            <div id="freeform-section" class="hidden">
-                <!-- Contenu de la saisie libre -->
-            </div>
-            <div id="library-section" class="hidden">
-                <!-- Contenu de la bibliothèque -->
-            </div>
-            <div id="playground-section" class="hidden">
-                <div class="page-header"><h1 class="page-title">Playground</h1><p class="page-subtitle">Bientôt disponible.</p></div>
-            </div>
-            <div id="settings-section" class="hidden">
-                <div class="page-header"><h1 class="page-title">Paramètres</h1></div>
-            </div>
+            <div id="freeform-section" class="hidden"><h1>Saisie Libre</h1></div>
+            <div id="library-section" class="hidden"><h1>Bibliothèque</h1></div>
+            <div id="playground-section" class="hidden"><h1>Playground</h1></div>
+            <div id="settings-section" class="hidden"><h1>Paramètres</h1></div>
         </main>
     </div>
     <script src="js/app.js" defer></script>
